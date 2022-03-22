@@ -1,8 +1,9 @@
 export default {
   setTheme(state, val) {
-    state.setting.themeId = val
+    state.setting.theme.id = val
   },
   setSearchSource(state, { searchSource, tempSearchSource }) {
+    console.log(searchSource, tempSearchSource)
     if (searchSource != null) state.setting.search.searchSource = searchSource
     if (tempSearchSource != null) state.setting.search.tempSearchSource = tempSearchSource
   },
@@ -33,6 +34,9 @@ export default {
     } else {
       state.setting.player.volume = val
     }
+  },
+  setPlayDetailLyricFont(state, val) {
+    state.setting.playDetail.style.fontSize = val
   },
   setPlayNextMode(state, val) {
     state.setting.player.togglePlayMethod = val

@@ -4,6 +4,7 @@ const names = {
     close: 'close',
     min: 'min',
     max: 'max',
+    fullscreen: 'fullscreen',
     set_app_name: 'set_app_name',
     clear_cache: 'clear_cache',
     get_cache_size: 'get_cache_size',
@@ -11,7 +12,11 @@ const names = {
     clear_env_params_deeplink: 'clear_env_params_deeplink',
     wait: 'wait',
     wait_cancel: 'wait_cancel',
+    interval: 'interval',
+    interval_callback: 'interval_callback',
+    interval_cancel: 'interval_cancel',
     open_dev_tools: 'open_dev_tools',
+    system_theme_change: 'system_theme_change',
 
     set_music_meta: 'set_music_meta',
     progress: 'progress',
@@ -66,6 +71,8 @@ const names = {
     request_user_api_cancel: 'request_user_api_cancel',
     get_user_api_status: 'get_user_api_status',
     user_api_status: 'user_api_status',
+    user_api_show_update_alert: 'user_api_show_update_alert',
+    user_api_set_allow_update_alert: 'user_api_set_allow_update_alert',
 
     get_lyric: 'get_lyric',
     save_lyric: 'save_lyric',
@@ -81,6 +88,9 @@ const names = {
     sync_action_list: 'sync_action_list',
     sync_list: 'sync_list',
 
+    taskbar_set_thumbar_buttons: 'taskbar_set_thumbar_buttons',
+    taskbar_set_thumbnail_clip: 'taskbar_set_thumbnail_clip',
+    taskbar_on_thumbar_button_click: 'taskbar_on_thumbar_button_click',
   },
   winLyric: {
     close: 'close',

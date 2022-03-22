@@ -2,31 +2,31 @@
 <div :class="$style.lists" ref="dom_lists">
   <div :class="$style.listHeader">
     <h2 :class="$style.listsTitle">{{$t('my_list')}}</h2>
-    <button :class="$style.listsAdd" @click="handleShowNewList" :tips="$t('lists__new_list_btn')">
+    <button :class="$style.listsAdd" @click="handleShowNewList" :aria-label="$t('lists__new_list_btn')">
       <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" height="70%" viewBox="0 0 24 24" space="preserve">
         <use xlink:href="#icon-list-add"></use>
       </svg>
     </button>
   </div>
   <ul class="scroll" :class="[$style.listsContent, { [$style.sortable]: keyEvent.isModDown }]" ref="dom_lists_list">
-    <li class="default-list" :class="[$style.listsItem, {[$style.active]: defaultList.id == listId}]" :tips="defaultList.name"
+    <li class="default-list" :class="[$style.listsItem, {[$style.active]: defaultList.id == listId}]" :aria-label="defaultList.name" :aria-selected="defaultList.id == listId"
       @contextmenu="handleListsItemRigthClick($event, -2)" @click="handleListToggle(defaultList.id)"
     >
       <span :class="$style.listsLabel">{{defaultList.name}}</span>
     </li>
-    <li class="default-list" :class="[$style.listsItem, {[$style.active]: loveList.id == listId}]" :tips="loveList.name"
+    <li class="default-list" :class="[$style.listsItem, {[$style.active]: loveList.id == listId}]" :aria-label="loveList.name" :aria-selected="loveList.id == listId"
       @contextmenu="handleListsItemRigthClick($event, -1)" @click="handleListToggle(loveList.id)">
       <span :class="$style.listsLabel">{{loveList.name}}</span>
     </li>
     <li class="user-list"
-      :class="[$style.listsItem, {[$style.active]:item.id == listId}, {[$style.clicked]: listsData.rightClickItemIndex == index}, {[$style.fetching]: fetchingListStatus[item.id]}]" :data-index="index"
-      @contextmenu="handleListsItemRigthClick($event, index)" :tips="item.name" v-for="(item, index) in userLists" :key="item.id"
+      :class="[$style.listsItem, {[$style.active]: item.id == listId}, {[$style.clicked]: listsData.rightClickItemIndex == index}, {[$style.fetching]: fetchingListStatus[item.id]}]" :data-index="index"
+      @contextmenu="handleListsItemRigthClick($event, index)" :aria-label="item.name" v-for="(item, index) in userLists" :key="item.id" :aria-selected="defaultList.id == listId"
     >
       <span :class="$style.listsLabel" @click="handleListToggle(item.id, index + 2)">{{item.name}}</span>
       <input class="key-bind" :class="$style.listsInput" @contextmenu.stop type="text"
         @keyup.enter="handleListsSave(index, $event)" @blur="handleListsSave(index, $event)" :value="item.name" :placeholder="item.name"/>
     </li>
-    <transition enter-active-class="animated-fast slideInLeft" leave-active-class="animated-fast fadeOut" @after-leave="handleListsNewAfterLeave">
+    <transition enter-active-class="animated-fast slideInLeft" leave-active-class="animated-fast fadeOut" @after-leave="handleListsNewAfterLeave" @after-enter="$refs.dom_listsNewInput.focus()">
       <li :class="[$style.listsItem, $style.listsNew, listsData.isNewLeave ? $style.newLeave : null]" v-if="listsData.isShowNewList">
         <input class="key-bind" :class="$style.listsInput" @contextmenu.stop ref="dom_listsNewInput" type="text" @keyup.enter="handleListsCreate"
           @blur="handleListsCreate" :placeholder="$t('lists__new_list_input')"/>
@@ -41,7 +41,7 @@
 
 <script>
 import { mapMutations, mapActions } from 'vuex'
-import { openSaveDir, saveLxConfigFile, selectDir, readLxConfigFile, filterFileName } from '@renderer/utils'
+import { openSaveDir, saveLxConfigFile, selectDir, readLxConfigFile, filterFileName, openUrl } from '@renderer/utils'
 import musicSdk from '@renderer/utils/music'
 import DuplicateMusicModal from './DuplicateMusicModal'
 import ListSortModal from './ListSortModal'
@@ -97,6 +97,7 @@ export default {
           rename: true,
           duplicate: true,
           sort: true,
+          sourceDetail: true,
           import: true,
           export: true,
           sync: false,
@@ -140,6 +141,11 @@ export default {
           name: this.$t('lists__duplicate'),
           action: 'duplicate',
           disabled: !this.listsData.itemMenuControl.duplicate,
+        },
+        {
+          name: this.$t('lists__source_detail'),
+          action: 'sourceDetail',
+          disabled: !this.listsData.itemMenuControl.sourceDetail,
         },
         {
           name: this.$t('lists__import'),
@@ -197,8 +203,17 @@ export default {
     ...mapActions('leaderboard', {
       getBoardListAll: 'getListAll',
     }),
-    handle_key_mod_down() {
+    handle_key_mod_down(event) {
       if (!this.keyEvent.isModDown) {
+        // console.log(event)
+        switch (event.event.target.tagName) {
+          case 'INPUT':
+          case 'SELECT':
+          case 'TEXTAREA':
+            return
+          default: if (event.event.target.isContentEditable) return
+        }
+
         this.keyEvent.isModDown = true
         this.setDisabledSort(false)
         const dom_target = this.dom_lists_list.querySelector('.' + this.$style.editing)
@@ -248,9 +263,6 @@ export default {
     },
     handleShowNewList() {
       this.listsData.isShowNewList = true
-      this.$nextTick(() => {
-        this.$refs.dom_listsNewInput.focus()
-      })
     },
     handleListsNewAfterLeave() {
       this.listsData.isNewLeave = false
@@ -279,6 +291,7 @@ export default {
           break
       }
       this.listsData.itemMenuControl.sort = !!getList(this.getTargetListInfo(index)?.id).length
+      this.listsData.itemMenuControl.sourceDetail = this.assertSupportDetail(source, index)
       this.listsData.rightClickItemIndex = index
       this.listsData.menuLocation.x = event.currentTarget.offsetLeft + event.offsetX
       this.listsData.menuLocation.y = event.currentTarget.offsetTop + event.offsetY - this.dom_lists_list.scrollTop
@@ -312,6 +325,9 @@ export default {
         case 'sort':
           this.selectedSortListInfo = this.getTargetListInfo(index)
           this.isShowListSortModal = true
+          break
+        case 'sourceDetail':
+          this.openSourceDetailPage(index)
           break
         case 'import':
           this.handleImportList(index)
@@ -372,6 +388,33 @@ export default {
           break
       }
       return list
+    },
+    assertSupportDetail(source, index) {
+      if (source) {
+        const { sourceListId } = this.userLists[index]
+        if (sourceListId) {
+          if (/board__/.test(sourceListId)) {
+            // const id = sourceListId.replace(/board__/, '')
+            return !!musicSdk[source]?.leaderboard?.getDetailPageUrl
+          } else {
+            return !!musicSdk[source]?.songList?.getDetailPageUrl
+          }
+        }
+      }
+      return false
+    },
+    async openSourceDetailPage(index) {
+      const { source, sourceListId } = this.userLists[index]
+      if (!sourceListId) return
+      let url
+      if (/board__/.test(sourceListId)) {
+        const id = sourceListId.replace(/board__/, '')
+        url = musicSdk[source].leaderboard.getDetailPageUrl(id)
+      } else if (musicSdk[source].songList?.getDetailPageUrl) {
+        url = await musicSdk[source].songList.getDetailPageUrl(sourceListId)
+      }
+      if (!url) return
+      openUrl(url)
     },
     handleExportList(index) {
       const list = this.getTargetListInfo(index)

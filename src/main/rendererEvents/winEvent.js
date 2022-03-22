@@ -1,4 +1,5 @@
 const { isWin } = require('../../common/utils')
+const { openDevTools } = require('@main/utils')
 const { mainSend, NAMES: { mainWindow: ipcMainWindowNames } } = require('../../common/ipc')
 global.isQuitting = false
 global.isTrafficLightClose = false // 是否点击软件上的关闭按钮关闭
@@ -25,11 +26,17 @@ module.exports = mainWindow => {
   // })
   mainWindow.on('focus', () => {
     mainSend(mainWindow, ipcMainWindowNames.focus)
+    global.lx_event.mainWindow.focus()
+  })
+
+  mainWindow.on('blur', () => {
+    global.lx_event.mainWindow.blur()
   })
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
     global.lx_event.mainWindow.readyToShow()
+    if (global.envParams.cmdParams.debug) openDevTools(global.modules.mainWindow.webContents)
   })
 
   mainWindow.on('show', () => {

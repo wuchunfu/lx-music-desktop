@@ -11,10 +11,10 @@ div(:class="$style.container")
           h3(:title="listDetail.info.name || selectListInfo.name") {{listDetail.info.name || selectListInfo.name}}
           p(:title="listDetail.info.desc || selectListInfo.desc") {{listDetail.info.desc || selectListInfo.desc}}
         div(:class="$style.songListHeaderRight")
-          base-btn(:class="$style.headerRightBtn" :disabled="detailLoading" @click="playSongListDetail") {{$t('list__play')}}
+          base-btn(:class="$style.headerRightBtn" :disabled="detailLoading" @click="playSongListDetail()") {{$t('list__play')}}
           base-btn(:class="$style.headerRightBtn" :disabled="detailLoading" @click="addSongListDetail") {{$t('list__collect')}}
           base-btn(:class="$style.headerRightBtn" @click="hideListDetail") {{$t('back')}}
-      material-online-list(ref="songList" @toggle-page="handleToggleListDetailPage" :page="listDetail.page" :limit="listDetail.limit" :total="listDetail.total"
+      material-online-list(ref="songList" @play-list="playSongListDetail" @toggle-page="handleToggleListDetailPage" :page="listDetail.page" :limit="listDetail.limit" :total="listDetail.total"
         :list="listDetail.list" :noItem="isGetDetailFailed ? $t('list__load_failed') : $t('list__loading')")
   transition(enter-active-class="animated-fast fadeIn" leave-active-class="animated-fast fadeOut")
     div(:class="$style.songListContainer" v-show="!isVisibleListDetail")
@@ -81,7 +81,6 @@ export default {
       importSongListText: '',
       listWidth: 645,
       isGetDetailFailed: false,
-      isInitedTagListWidth: false,
       detailLoading: false,
     }
   },
@@ -159,7 +158,7 @@ export default {
         this.sortId = this.sorts[0] && this.sorts[0].id
       }
     },
-    'setting.themeId'() {
+    'setting.theme.id'() {
       this.setTagListWidth()
     },
   },
@@ -202,9 +201,17 @@ export default {
     }),
     listenEvent() {
       window.eventHub.on('key_backspace_down', this.handle_key_backspace_down)
+      window.addEventListener('resize', this.handleSetTagWidth)
     },
     unlistenEvent() {
       window.eventHub.off('key_backspace_down', this.handle_key_backspace_down)
+      window.removeEventListener('resize', this.handleSetTagWidth)
+    },
+    handleSetTagWidth() {
+      setTimeout(() => {
+        this.setTagListWidth()
+        setTimeout(this.setTagListWidth, 100)
+      })
     },
     handle_key_backspace_down({ event }) {
       if (!this.isVisibleListDetail ||
@@ -287,14 +294,17 @@ export default {
       this.handleGetListDetail(id, source, 1)
     },
     setTagListWidth() {
-      this.isInitedTagListWidth = true
+      if (this.isVisibleListDetail) return
       this.listWidth = this.$refs.tagList.$el.clientWidth + this.$refs.tab.$el.clientWidth + 2
     },
     handleGetListDetail(id, source, page) {
+      this.detailLoading = true
       this.isGetDetailFailed = false
       return this.getListDetail({ id, source, page }).catch(err => {
         this.isGetDetailFailed = true
         return Promise.reject(err)
+      }).finally(() => {
+        this.detailLoading = false
       })
     },
     async fetchList() {
@@ -315,14 +325,14 @@ export default {
         sourceListId: this.listDetail.id,
       })
     },
-    async playSongListDetail() {
+    async playSongListDetail(index = 0) {
       if (!this.listDetail.info.name) return
       const id = `${this.listDetail.source}__${this.listDetail.id}`
       let isPlayingList = false
       if (this.listDetail.list?.length) {
         this.setTempList({
           list: [...this.listDetail.list],
-          index: 0,
+          index,
           id,
         })
         isPlayingList = true
@@ -339,7 +349,7 @@ export default {
       } else {
         this.setTempList({
           list,
-          index: 0,
+          index,
           id,
         })
       }

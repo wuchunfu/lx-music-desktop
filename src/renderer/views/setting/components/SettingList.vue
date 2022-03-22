@@ -5,7 +5,9 @@ dd
     base-checkbox(id="setting_list_showSource_enable" v-model="currentStting.list.isShowSource" :label="$t('setting__list_source')")
   .gap-top
     base-checkbox(id="setting_list_scroll_enable" v-model="currentStting.list.isSaveScrollLocation" :label="$t('setting__list_scroll')")
-dd(:tips="$t('setting__basic_sourcename_title')")
+  .gap-top
+    base-checkbox(id="setting_list_clickAction_enable" v-model="currentStting.list.isClickPlayList" :label="$t('setting__list_click_action')")
+dd(:aria-label="$t('setting__basic_sourcename_title')")
   h3#list_addMusicLocationType {{$t('setting__list_add_music_location_type')}}
   div
     base-checkbox.gap-left(id="setting_list_add_music_location_type_top"
