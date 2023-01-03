@@ -2,10 +2,33 @@ import needle from 'needle'
 // import progress from 'request-progress'
 import { debugRequest } from './env'
 import { requestMsg } from './message'
-import { bHh } from './music/options'
+import { bHh } from './musicSdk/options'
 import { deflateRaw } from 'zlib'
-import { getProxyInfo } from './index'
+import { proxy } from '@renderer/store'
+import { httpOverHttp, httpsOverHttp } from 'tunnel'
 // import fs from 'fs'
+
+const httpsRxp = /^https:/
+const getRequestAgent = url => {
+  let options
+  if (proxy.enable && proxy.host) {
+    options = {
+      proxy: {
+        host: proxy.host,
+        port: proxy.port,
+      },
+    }
+  } else if (proxy.envProxy) {
+    options = {
+      proxy: {
+        host: proxy.envProxy.host,
+        port: proxy.envProxy.port,
+      },
+    }
+  }
+  return options ? (httpsRxp.test(url) ? httpsOverHttp : httpOverHttp)(options) : undefined
+}
+
 
 const request = (url, options, callback) => {
   let data
@@ -49,12 +72,20 @@ const defaultHeaders = {
 const buildHttpPromose = (url, options) => {
   let obj = {
     isCancelled: false,
+    cancelHttp: () => {
+      if (!obj.requestObj) return obj.isCancelled = true
+      cancelHttp(obj.requestObj)
+      obj.requestObj = null
+      obj.promise = obj.cancelHttp = null
+      obj.cancelFn(new Error(requestMsg.cancelRequest))
+      obj.cancelFn = null
+    },
   }
   obj.promise = new Promise((resolve, reject) => {
     obj.cancelFn = reject
     debugRequest && console.log(`\n---send request------${url}------------`)
     fetchData(url, options.method, options, (err, resp, body) => {
-    // options.isShowProgress && window.api.hideProgress()
+      // options.isShowProgress && window.api.hideProgress()
       debugRequest && console.log(`\n---response------${url}------------`)
       debugRequest && console.log(body)
       obj.requestObj = null
@@ -66,14 +97,6 @@ const buildHttpPromose = (url, options) => {
       if (obj.isCancelled) obj.cancelHttp()
     })
   })
-  obj.cancelHttp = () => {
-    if (!obj.requestObj) return obj.isCancelled = true
-    cancelHttp(obj.requestObj)
-    obj.requestObj = null
-    obj.promise = obj.cancelHttp = null
-    obj.cancelFn(new Error(requestMsg.cancelRequest))
-    obj.cancelFn = null
-  }
   return obj
 }
 
@@ -277,7 +300,7 @@ const fetchData = async(url, method, {
     method,
     headers: Object.assign({}, defaultHeaders, headers),
     timeout,
-    proxy: getProxyInfo(),
+    agent: getRequestAgent(url),
     json: format === 'json',
   }, (err, resp, body) => {
     if (err) return callback(err, null)

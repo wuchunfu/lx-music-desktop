@@ -1,8 +1,10 @@
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from '@renderer/utils/vueTools'
-import { scrollTo, throttle, formatPlayTime2 } from '@renderer/utils'
-import { player as eventPlayerNames } from '@renderer/event/names'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from '@common/utils/vueTools'
+import { throttle, formatPlayTime2 } from '@common/utils/common'
+import { scrollTo } from '@common/utils/renderer'
+import { play } from '@renderer/core/player/action'
+// import { player as eventPlayerNames } from '@renderer/event/names'
 
-export default ({ isPlay, lyric }) => {
+export default ({ isPlay, lyric, playProgress, isShowLyricProgressSetting, offset }) => {
   const dom_lyric = ref(null)
   const dom_lyric_text = ref(null)
   const dom_skip_line = ref(null)
@@ -28,8 +30,8 @@ export default ({ isPlay, lyric }) => {
     if (time == -1) return
     handleSkipMouseLeave()
     isStopScroll.value = false
-    window.eventHub.emit(eventPlayerNames.setProgress, time)
-    if (!isPlay.value) window.eventHub.emit(eventPlayerNames.setPlay)
+    window.app_event.setProgress(time)
+    if (!isPlay.value) play()
   }
   const handleSkipMouseEnter = () => {
     isSkipMouseEnter = true
@@ -40,24 +42,24 @@ export default ({ isPlay, lyric }) => {
     startLyricScrollTimeout()
   }
 
-  const setTime = throttle(() => {
-    if (point.x == null) {
-      if (!dom_skip_line.value) return
-      const rect = dom_skip_line.value.getBoundingClientRect()
-      point.x = rect.x
-      point.y = rect.y
-    }
+  const throttleSetTime = throttle(() => {
+    if (!dom_skip_line.value) return
+    const rect = dom_skip_line.value.getBoundingClientRect()
+    point.x = rect.x
+    point.y = rect.y
     let dom = document.elementFromPoint(point.x, point.y)
     if (dom_pre_line === dom) return
     if (dom.tagName == 'SPAN') {
       dom = dom.parentNode.parentNode
-    } else if (dom.classList.contains('font')) {
+    } else if (dom.classList.contains('line')) {
       dom = dom.parentNode
     }
     if (dom.time == null) {
       if (lyric.lines.length) {
         time = dom.classList.contains('pre') ? 0 : lyric.lines[lyric.lines.length - 1].time ?? 0
-        if (time) time = time / 1000
+        time = Math.max(time - lyric.offset - lyric.tempOffset, 0)
+        time /= 1000
+        if (time > playProgress.maxPlayTime) time = playProgress.maxPlayTime
         timeStr.value = formatPlayTime2(time)
       } else {
         time = -1
@@ -65,11 +67,16 @@ export default ({ isPlay, lyric }) => {
       }
     } else {
       time = dom.time
-      if (time) time = time / 1000
+      time = Math.max(time - lyric.offset - lyric.tempOffset, 0)
+      time /= 1000
+      if (time > playProgress.maxPlayTime) time = playProgress.maxPlayTime
       timeStr.value = formatPlayTime2(time)
     }
     dom_pre_line = dom
   })
+  const setTime = () => {
+    if (isShowLyricProgressSetting.value) throttleSetTime()
+  }
 
   const handleScrollLrc = (duration = 300) => {
     if (!dom_lines?.length || !dom_lyric.value) return
@@ -97,29 +104,47 @@ export default ({ isPlay, lyric }) => {
       handleScrollLrc()
     }, 3000)
   }
-  const handleLyricMouseDown = event => {
+  const handleLyricDown = (y) => {
     // console.log(event)
     if (delayScrollTimeout) {
       clearTimeout(delayScrollTimeout)
       delayScrollTimeout = null
     }
     isMsDown.value = true
-    msDownY = event.clientY
+    msDownY = y
     msDownScrollY = dom_lyric.value.scrollTop
+  }
+  const handleLyricMouseDown = event => {
+    handleLyricDown(event.clientY)
+  }
+  const handleLyricTouchStart = event => {
+    if (event.changedTouches.length) {
+      const touch = event.changedTouches[0]
+      handleLyricDown(touch.clientY)
+    }
   }
   const handleMouseMsUp = event => {
     isMsDown.value = false
   }
-  const handleMouseMsMove = event => {
+  const handleMove = (y) => {
     if (isMsDown.value) {
       if (!isStopScroll.value) isStopScroll.value = true
       if (cancelScrollFn) {
         cancelScrollFn()
         cancelScrollFn = null
       }
-      dom_lyric.value.scrollTop = msDownScrollY + msDownY - event.clientY
+      dom_lyric.value.scrollTop = msDownScrollY + msDownY - y
       startLyricScrollTimeout()
       setTime()
+    }
+  }
+  const handleMouseMsMove = event => {
+    handleMove(event.clientY)
+  }
+  const handleTouchMove = (e) => {
+    if (e.changedTouches.length) {
+      const touch = e.changedTouches[0]
+      handleMove(touch.clientY)
     }
   }
 
@@ -143,7 +168,7 @@ export default ({ isPlay, lyric }) => {
     dom_lyric_text.value.textContent = ''
     dom_lyric_text.value.appendChild(dom_line_content)
     nextTick(() => {
-      dom_lines = dom_lyric.value.querySelectorAll('.lrc-content')
+      dom_lines = dom_lyric.value.querySelectorAll('.line-content')
       handleScrollLrc()
     })
   }
@@ -184,17 +209,22 @@ export default ({ isPlay, lyric }) => {
   watch(() => lyric.line, scrollLine)
 
   onMounted(() => {
+    document.addEventListener('mousemove', handleMouseMsMove)
+    document.addEventListener('mouseup', handleMouseMsUp)
+    document.addEventListener('touchmove', handleTouchMove)
+    document.addEventListener('touchend', handleMouseMsUp)
+
     initLrc(lyric.lines, null)
     nextTick(() => {
       scrollLine(lyric.line)
     })
   })
 
-  document.addEventListener('mousemove', handleMouseMsMove)
-  document.addEventListener('mouseup', handleMouseMsUp)
   onBeforeUnmount(() => {
     document.removeEventListener('mousemove', handleMouseMsMove)
     document.removeEventListener('mouseup', handleMouseMsUp)
+    document.removeEventListener('touchmove', handleTouchMove)
+    document.removeEventListener('touchend', handleMouseMsUp)
   })
 
   return {
@@ -205,9 +235,11 @@ export default ({ isPlay, lyric }) => {
     isMsDown,
     timeStr,
     handleLyricMouseDown,
+    handleLyricTouchStart,
     handleWheel,
     handleSkipPlay,
     handleSkipMouseEnter,
     handleSkipMouseLeave,
+    handleScrollLrc,
   }
 }

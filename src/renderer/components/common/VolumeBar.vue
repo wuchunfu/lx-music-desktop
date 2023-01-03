@@ -1,25 +1,24 @@
 <template>
-<div :class="[$style.volumeContent, className]">
-  <div :class="[$style.volume, {[$style.muted]: setting.player.isMute} ]">
-    <div :class="$style.volumeBar" ref="dom_volumeBar" :style="{ transform: `scaleX(${volume || 0})` }"></div>
+  <div :class="[$style.volumeContent, className]">
+    <div :class="[$style.volume ]">
+      <div ref="dom_volumeBar" :class="$style.volumeBar" :style="{ transform: `scaleX(${volume || 0})` }" />
+    </div>
+    <div :class="$style.volumeMask" @mousedown="handleVolumeMsDown" />
   </div>
-  <div :class="$style.volumeMask" @mousedown="handleVolumeMsDown" :aria-label="`${$t('player__volume')}${parseInt(volume * 100)}%`"></div>
-</div>
 </template>
 
 <script>
-import { ref, onBeforeUnmount } from '@renderer/utils/vueTools'
+import { ref, onBeforeUnmount } from '@common/utils/vueTools'
 // import { player as eventPlayerNames } from '@renderer/event/names'
-import { volume, isMute, setVolume, setMute } from '@renderer/core/share/volume'
+
+import { volume, isMute } from '@renderer/store/player/volume'
+import { appSetting } from '@renderer/store/setting'
 
 export default {
   props: {
     className: {
       type: String,
-    },
-    setting: {
-      type: Object,
-      required: true,
+      default: '',
     },
   },
   setup(props) {
@@ -38,9 +37,9 @@ export default {
       if (val < 0) val = 0
       if (val > 1) val = 1
 
-      setVolume(volumeEvent.msDownVolume = val)
+      window.app_event.setVolume(volumeEvent.msDownVolume = val)
 
-      if (isMute.value) setMute(false)
+      // if (isMute.value) window.app_event.setVolumeIsMute(false)
     }
     const handleVolumeMsUp = () => {
       volumeEvent.isMsDown = false
@@ -50,7 +49,7 @@ export default {
       let volume = volumeEvent.msDownVolume + (event.clientX - volumeEvent.msDownX) / dom_volumeBar.value.clientWidth
       if (volume > 1) volume = 1
       else if (volume < 0) volume = 0
-      setVolume(volume)
+      window.app_event.setVolume(volume)
     }
 
     document.addEventListener('mousemove', handleVolumeMsMove)
@@ -65,6 +64,7 @@ export default {
       dom_volumeBar,
       volume,
       isMute,
+      appSetting,
     }
   },
 }
@@ -76,12 +76,13 @@ export default {
 .volume-content {
   flex: none;
   position: relative;
-  width: 80px;
-  margin-right: 10px;
+  width: 100px;
+  padding: 5px 0;
+  // margin-right: 10px;
   display: flex;
   align-items: center;
   opacity: .5;
-  transition: opacity @transition-theme;
+  transition: opacity @transition-normal;
   &:hover {
     opacity: 1;
   }
@@ -90,20 +91,20 @@ export default {
 .volume {
   // cursor: pointer;
   width: 100%;
-  height: 0.25em;
-  border-radius: 10px;
-  // overflow: hidden;
-  transition: @transition-theme;
+  height: 5px;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: @transition-normal;
   transition-property: background-color, opacity;
-  background-color: @color-player-progress-bar1;
+  background-color: var(--color-primary-alpha-700);
   // background-color: #f5f5f5;
   position: relative;
-  border-radius: @radius-progress-border;
+  // border-radius: @radius-progress-border;
 }
 
-.muted {
-  opacity: .5;
-}
+// .muted {
+//   opacity: .5;
+// }
 
 .volume-bar {
   position: absolute;
@@ -115,9 +116,9 @@ export default {
   transition-timing-function: ease;
   width: 100%;
   height: 100%;
-  border-radius: @radius-progress-border;
+  // border-radius: @radius-progress-border;
   transition-duration: 0.2s;
-  background-color: @color-btn;
+  background-color: var(--color-button-font);
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -129,16 +130,4 @@ export default {
   cursor: pointer;
 }
 
-
-each(@themes, {
-  :global(#root.@{value}) {
-    .volume {
-      background-color: ~'@{color-@{value}-player-progress-bar1}';
-    }
-
-    .volume-bar {
-      background-color: ~'@{color-@{value}-btn}';
-    }
-  }
-})
 </style>

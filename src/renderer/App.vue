@@ -1,68 +1,41 @@
-<template lang="pug">
-#container
-  core-aside#left
-  #right
-    core-toolbar#toolbar
-    #view
-      core-view#view-container
-    core-play-bar#player
-  core-icons
-  core-version-modal
-  core-pact-modal
-  core-sync-mode-modal
-  core-play-detail
+<template>
+  <div id="container" class="view-container">
+    <layout-aside id="left" />
+    <div id="right">
+      <layout-toolbar id="toolbar" />
+      <layout-view id="view" />
+      <layout-play-bar id="player" />
+    </div>
+    <layout-icons />
+    <layout-version-modal />
+    <layout-pact-modal />
+    <layout-sync-mode-modal />
+    <layout-play-detail />
+  </div>
 </template>
 
-<script>
-import { useRefGetter, watch, onMounted } from '@renderer/utils/vueTools'
+<script setup>
+import { onMounted } from '@common/utils/vueTools'
+// import BubbleCursor from '@common/utils/effects/cursor-effects/bubbleCursor'
+// import '@common/utils/effects/snow.min'
 import useApp from '@renderer/core/useApp'
-import { isFullscreen } from '@renderer/core/share'
-import { getFontSizeWithScreen } from '@renderer/utils'
 
-export default {
-  setup() {
-    const theme = useRefGetter('theme')
-    const font = useRefGetter('font')
-    const windowSizeActive = useRefGetter('windowSizeActive')
+useApp()
 
-    const dom_root = document.getElementById('root')
+onMounted(() => {
+  document.getElementById('root').style.display = 'block'
 
-    watch(theme, (val) => {
-      dom_root.className = val
-    })
-    watch(font, (val) => {
-      document.documentElement.style.fontFamily = val
-    }, {
-      immediate: true,
-    })
-    watch(isFullscreen, val => {
-      if (val) {
-        document.body.classList.remove(window.dt ? 'disableTransparent' : 'transparent')
-        document.body.classList.add('fullscreen')
-        document.documentElement.style.fontSize = getFontSizeWithScreen(window.screen.width) + 'px'
-      } else {
-        document.body.classList.remove('fullscreen')
-        document.body.classList.add(window.dt ? 'disableTransparent' : 'transparent')
-        document.documentElement.style.fontSize = windowSizeActive.value.fontSize
-      }
-    })
+  // const styles = getComputedStyle(document.documentElement)
+  // window.lxData.bubbleCursor = new BubbleCursor({
+  //   fillStyle: styles.getPropertyValue('--color-primary-alpha-900'),
+  //   strokeStyle: styles.getPropertyValue('--color-primary-alpha-700'),
+  // })
+})
 
-    useApp()
+// onBeforeUnmount(() => {
+//   window.lxData.bubbleCursor?.destroy()
+// })
 
-    onMounted(() => {
-      // 隐藏等待界面
-      /* inited.value = true
-      const dom_mask = document.getElementById('waiting-mask')
-      if (dom_mask) {
-        dom_mask.addEventListener('transitionend', () => {
-          dom_mask.parentNode.removeChild(dom_mask)
-        })
-        dom_mask.classList.add('hide')
-      } */
-      dom_root.style.display = 'block'
-    })
-  },
-}
 </script>
 
 
@@ -70,24 +43,28 @@ export default {
 @import './assets/styles/index.less';
 @import './assets/styles/layout.less';
 
+html {
+  height: 100vh;
+}
 html, body {
-  overflow: hidden;
+  // overflow: hidden;
+  box-sizing: border-box;
 }
 
 body {
   user-select: none;
-  height: 100vh;
-  box-sizing: border-box;
+  height: 100%;
 }
 #root {
   height: 100%;
   position: relative;
   overflow: hidden;
-  color: @color-theme_2-font;
-  background: @color-theme-bgimg @color-theme-bgposition no-repeat;
-  background-size: @color-theme-bgsize;
-  transition: background-color @transition-theme;
-  background-color: @color-theme;
+  color: var(--color-font);
+  background: var(--background-image) var(--background-image-position) no-repeat;
+  background-size: var(--background-image-size);
+  transition: background-color @transition-normal;
+  background-color: var(--color-content-background);
+  box-sizing: border-box;
 }
 
 .disableAnimation * {
@@ -96,6 +73,7 @@ body {
 }
 
 .transparent {
+  background: transparent;
   padding: @shadow-app;
   // #waiting-mask {
   //   border-radius: @radius-border;
@@ -104,30 +82,36 @@ body {
   //   top: @shadow-app;
   //   bottom: @shadow-app;
   // }
+  #body {
+    border-radius: @radius-border;
+  }
   #root {
     box-shadow: 0 0 @shadow-app rgba(0, 0, 0, 0.5);
     border-radius: @radius-border;
-    background-color: transparent;
   }
-  #container {
-    border-radius: @radius-border;
-    background-color: transparent;
-  }
+  // #container {
+    // border-radius: @radius-border;
+    // background-color: transparent;
+  // }
 }
 .disableTransparent {
-  background-color: #fff;
+  background-color: var(--color-content-background);
+
+  #body {
+    border: 1Px solid var(--color-primary-light-500);
+  }
 
   #right {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
 
-  #view { // 偏移5px距离解决非透明模式下右侧滚动条无法拖动的问题
-    margin-right: 5Px;
-  }
+  // #view { // 偏移5px距离解决非透明模式下右侧滚动条无法拖动的问题
+  //   margin-right: 5Px;
+  // }
 }
 .fullscreen {
-  background-color: #fff;
+  background-color: var(--color-content-background);
 
   #right {
     border-top-left-radius: 0;
@@ -139,6 +123,7 @@ body {
   position: relative;
   display: flex;
   height: 100%;
+  background-color: var(--color-app-background);
 }
 
 #left {
@@ -149,8 +134,8 @@ body {
   flex: auto;
   display: flex;
   flex-flow: column nowrap;
-  transition: background-color @transition-theme;
-  background-color: @color-theme_2;
+  transition: background-color @transition-normal;
+  background-color: var(--color-main-background);
 
   border-top-left-radius: @radius-border;
   border-bottom-left-radius: @radius-border;
@@ -163,24 +148,19 @@ body {
 #view {
   position: relative;
   flex: auto;
-  display: flex;
+  // display: flex;
   min-height: 0;
 }
-#view-container {
-  flex: auto;
+
+.view-container {
+  transition: opacity @transition-normal;
+}
+#root.show-modal > .view-container {
+  opacity: .9;
+}
+#view.show-modal > .view-container {
+  opacity: .2;
 }
 
-each(@themes, {
-  #root.@{value} {
-    color: ~'@{color-@{value}-theme_2-font}';
-    background-color: ~'@{color-@{value}-theme}';
-    background-image: ~'@{color-@{value}-theme-bgimg}';
-    background-size: ~'@{color-@{value}-theme-bgsize}';
-    background-position: ~'@{color-@{value}-theme-bgposition}';
-    #right {
-      background-color: ~'@{color-@{value}-theme_2}';
-    }
-  }
-})
 </style>
 

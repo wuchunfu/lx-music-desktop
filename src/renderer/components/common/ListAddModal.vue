@@ -1,26 +1,27 @@
 <template>
-<material-modal :show="show" :bg-close="bgClose" @close="handleClose" :teleport="teleport" max-width="70%">
-  <main :class="$style.main">
-    <h2>{{$t('list_add__' + (isMove ? 'title_first_move' : 'title_first_add'))}}&nbsp;<span :class="$style.name">{{this.musicInfo && `${musicInfo.name}`}}</span>&nbsp;{{$t('list_add__title_last')}}</h2>
-    <div class="scroll" :class="$style.btnContent">
-      <base-btn :class="$style.btn" :aria-label="$t('list_add__btn_title', { name: item.name })" :key="item.id" :disabled="item.isExist" @click="handleClick(index)" v-for="(item, index) in lists">{{item.name}}</base-btn>
-      <base-btn :class="[$style.btn, $style.newList, isEditing ? $style.editing : null]" @click="handleEditing($event)" :aria-label="$t('lists__new_list_btn')">
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 0 42 42" space="preserve">
-          <use xlink:href="#icon-addTo"></use>
-        </svg>
-        <input class="key-bind" :class="$style.newListInput" :value="newListName" type="text" :placeholder="$t('lists__new_list_input')" @keyup.enter="handleSaveList($event)" @blur="handleSaveList($event)"/>
-      </base-btn>
-      <span :class="$style.btn" :key="i" v-for="i in spaceNum"></span>
-    </div>
-  </main>
-</material-modal>
+  <material-modal :show="show" :bg-close="bgClose" :teleport="teleport" max-width="70%" min-width="200px" @close="handleClose">
+    <main :class="$style.main">
+      <h2>{{ $t('list_add__' + (isMove ? 'title_first_move' : 'title_first_add')) }}&nbsp;<span :class="$style.name">{{ currentMusicInfo.name }}</span>&nbsp;{{ $t('list_add__title_last') }}</h2>
+      <div class="scroll" :class="$style.btnContent">
+        <base-btn v-for="(item, index) in lists" :key="item.id" :class="$style.btn" :aria-label="$t('list_add__btn_title', { name: item.name })" :disabled="item.isExist" @click="handleClick(index)">{{ item.name }}</base-btn>
+        <base-btn :class="[$style.btn, $style.newList, isEditing ? $style.editing : null]" :aria-label="$t('lists__new_list_btn')" @click="handleEditing($event)">
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 0 42 42" space="preserve">
+            <use xlink:href="#icon-addTo" />
+          </svg>
+          <input :class="$style.newListInput" :value="newListName" type="text" :placeholder="$t('lists__new_list_input')" @keyup.enter="handleSaveList($event)" @blur="handleSaveList($event)">
+        </base-btn>
+        <span v-for="i in spaceNum" :key="i" :class="$style.btn" />
+      </div>
+    </main>
+  </material-modal>
 </template>
 
 <script>
-import { mapMutations } from 'vuex'
-import { computed } from '@renderer/utils/vueTools'
-import { defaultList, loveList, userLists } from '@renderer/core/share/list'
-import { getList } from '@renderer/core/share/utils'
+// import { mapMutations } from 'vuex'
+import { watch, ref, onBeforeUnmount } from '@common/utils/vueTools'
+import { defaultList, loveList, userLists } from '@renderer/store/list/state'
+import { addListMusics, moveListMusics, createUserList, getMusicExistListIds } from '@renderer/store/list/action'
+import useKeyDown from '@renderer/utils/compositions/useKeyDown'
 
 export default {
   props: {
@@ -29,7 +30,8 @@ export default {
       default: false,
     },
     musicInfo: {
-      type: Object,
+      type: [Object, null],
+      required: true,
     },
     bgClose: {
       type: Boolean,
@@ -53,21 +55,68 @@ export default {
       type: Boolean,
       default: false,
     },
-    teleport: String,
+    teleport: {
+      type: String,
+      default: '#root',
+    },
   },
   emits: ['update:show'],
   setup(props) {
-    const lists = computed(() => {
-      if (!props.musicInfo) return []
-      const targetMid = props.musicInfo.songmid
-      return [
+    const keyModDown = useKeyDown('mod')
+    const lists = ref([])
+
+    const currentMusicInfo = ref({})
+
+    const checkMusicExist = (musicInfo) => {
+      const mid = musicInfo.id
+      getMusicExistListIds(mid).then(ids => {
+        if (mid != musicInfo.id) return
+        for (const list of lists.value) {
+          if (ids.includes(list.id)) list.isExist = true
+        }
+      })
+    }
+
+    let stopWatchUserList = null
+
+    const getList = () => {
+      lists.value = [
         defaultList,
         loveList,
         ...userLists,
-      ].filter(l => !props.excludeListId.includes(l.id)).map(l => ({ ...l, isExist: getList(l.id).some(s => s.songmid == targetMid) }))
+      ].filter(l => !props.excludeListId.includes(l.id)).map(l => ({ ...l, isExist: false }))
+      checkMusicExist(currentMusicInfo.value)
+    }
+
+    watch(() => props.show, show => {
+      if (!show) {
+        if (stopWatchUserList) {
+          stopWatchUserList()
+          stopWatchUserList = null
+        }
+        return
+      }
+      if (!props.musicInfo) return lists.value = []
+
+      currentMusicInfo.value = 'progress' in props.musicInfo ? props.musicInfo.metadata.musicInfo : props.musicInfo
+
+      getList()
+
+      stopWatchUserList = watch(userLists, getList)
     })
+
+    onBeforeUnmount(() => {
+      if (stopWatchUserList) {
+        stopWatchUserList()
+        stopWatchUserList = null
+      }
+    })
+
     return {
+      keyModDown,
       lists,
+      checkMusicExist,
+      currentMusicInfo,
     }
   },
   data() {
@@ -90,7 +139,6 @@ export default {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
-    ...mapMutations('list', ['listAdd', 'listMove', 'createUserList']),
     handleResize() {
       const width = window.innerWidth
       this.rowNum = width < 1920
@@ -101,8 +149,11 @@ export default {
     },
     handleClick(index) {
       this.isMove
-        ? this.listMove({ fromId: this.fromListId, toId: this.lists[index].id, musicInfo: this.musicInfo })
-        : this.listAdd({ id: this.lists[index].id, musicInfo: this.musicInfo })
+        ? moveListMusics(this.fromListId, this.lists[index].id, [this.currentMusicInfo])
+        : addListMusics(this.lists[index].id, [this.currentMusicInfo])
+
+      this.lists[index].isExist = true
+      if (this.keyModDown && !this.isMove) return
       this.$nextTick(() => {
         this.handleClose()
       })
@@ -121,7 +172,7 @@ export default {
       this.newListName = event.target.value = ''
       this.isEditing = false
       if (!name) return
-      this.createUserList({ name })
+      createUserList({ name })
     },
   },
 }
@@ -134,7 +185,7 @@ export default {
 .main {
   // padding: 15px 0;
   // max-width: 70%;
-  min-width: 200px;
+  // min-width: 200px;
   display: flex;
   flex-flow: column nowrap;
   justify-content: center;
@@ -143,7 +194,7 @@ export default {
   // overflow: hidden;
   h2 {
     font-size: 13px;
-    color: @color-theme_2-font;
+    color: var(--color-font);
     line-height: 1.3;
     text-align: center;
     padding: 15px;
@@ -151,7 +202,7 @@ export default {
 }
 
 .name {
-  color: @color-theme;
+  color: var(--color-primary);
 }
 
 .btn-content {
@@ -178,9 +229,9 @@ export default {
 }
 
 .newList {
-  border: 1px dashed @color-theme-hover;
-  background-color: @color-theme_2-background_2;
-  color: @color-theme-hover;
+  border: 1px dashed var(--color-primary-font-hover);
+  // background-color: var(--color-main-background);
+  color: var(--color-primary-font-hover);
   opacity: .7;
 
   svg {
@@ -236,23 +287,5 @@ export default {
     width: calc(@item-width4 - 15px);
   }
 }
-
-each(@themes, {
-  :global(#root.@{value}) {
-    .main {
-      h2 {
-        color: ~'@{color-@{value}-theme_2-font}';
-      }
-    }
-    .name {
-      color: ~'@{color-@{value}-theme}';
-    }
-    .newList {
-      border-color: ~'@{color-@{value}-theme-hover}';
-      color: ~'@{color-@{value}-theme-hover}';
-      background-color: ~'@{color-@{value}-theme_2-background_2}';
-    }
-  }
-})
 
 </style>

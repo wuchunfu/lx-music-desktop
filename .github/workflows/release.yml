@@ -11,15 +11,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Cache file
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             node_modules
@@ -31,7 +31,8 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
 
       - name: Build src code
         run: npm run build:src
@@ -39,12 +40,12 @@ jobs:
       - name: Release package
         run: |
           npm run publish:win:setup:x64:always
-          npm run publish:win:setup:x86
-          npm run publish:win:setup:arm64
-          npm run publish:win:setup:x86_64
           npm run publish:win:7z:x64
+          npm run publish:win:setup:x86
           npm run publish:win:7z:x86
+          npm run publish:win:setup:arm64
           npm run publish:win:7z:arm64
+          npm run publish:win:setup:x86_64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BT_TOKEN: ${{ secrets.BT_TOKEN }}
@@ -59,15 +60,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Check out git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Cache file
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             node_modules
@@ -79,7 +80,8 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
 
       - name: Build src code
         run: npm run build:src
@@ -104,18 +106,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install package
-        run: sudo apt-get install -y rpm libarchive-tools
+        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
 
       - name: Check out git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Cache file
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             node_modules
@@ -127,7 +129,8 @@ jobs:
             ${{ runner.os }}-build-
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
 
       - name: Build src code
         run: npm run build:src
@@ -135,7 +138,6 @@ jobs:
       - name: Release package
         run: |
           npm run publish:linux:deb:x64:always
-          npm run publish:linux:deb:x86
           npm run publish:linux:deb:arm64
           npm run publish:linux:deb:armv7l
           npm run publish:linux:appImage

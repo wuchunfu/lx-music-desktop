@@ -1,5 +1,7 @@
 # lx-music-desktop 常见问题
 
+本文档已迁移到：<https://lyswhut.github.io/lx-music-doc/desktop/faq>
+
 在阅读本常见问题后，仍然无法解决你的问题，请提交issue或者加企鹅群`830125506`反馈（无事勿加，入群先看群公告），反馈时请**注明**已阅读常见问题！
 
 ## ~~软件为什么没有桌面歌词与自定义列表功能~~
@@ -8,12 +10,14 @@
 
 ## 音乐播放列表机制
 
-1. 默认情况下，播放搜索列表、歌单列表、排行榜列表的歌曲时会自动将该歌曲添加到“我的列表”的试听列表后再播放，手动将歌曲添加到试听列表，再去试听列表找到这首歌点播放是等价的
-2. 如果你想要播放多首歌曲，需要使用多选功能（若不知道如何多选请看常见问题）多选后，将歌曲这些歌曲添加到“我的列表”播放，或使用稍后播放功能播放
+1. 默认情况下，播放搜索列表、歌单列表、排行榜列表的歌曲时会自动将该歌曲添加到“我的列表”的试听列表后再播放，这与手动将歌曲添加到试听列表，再去试听列表找到这首歌点播放是等价的
+2. 如果你想要播放多首歌曲，需要使用多选功能（若不知道如何多选请看常见问题）多选后，将这些歌曲添加到“我的列表”播放，或使用稍后播放功能播放
 3. 第2条适用于搜索列表、歌单列表、排行榜列表、我的列表中的歌曲
 4. 对于歌单详情列表，除了可以使用第2条的方式播放外，你可以点击详情页上面的播放按钮临时播放当前歌单，或点击收藏将当前歌单收藏到“我的列表”后再去播放
 5. 对于排行榜详情列表，除了可以使用第2条的方式播放外，你可以在右击排行榜名字后弹出的菜单中，播放或收藏整个排行榜，这与第四条的歌单中的播放、与收藏按钮功能一致
 6. v1.18.0及之后新增了“双击列表里的歌曲时自动切换到当前列表播放”设置，默认关闭，此功能仅对歌单、排行榜有效
+7. 将歌曲添加“稍后播放”后，它们会被放在一个优先级最高的特殊队列中，点击“下一曲”时会消耗该队列中的歌曲，并且无法通过“上一曲”功能播放该队列的上一首歌曲
+8. 在切歌时若不是通过“上一曲”、“下一曲”功能切歌（例如直接点击“排行榜列表”、“我的列表”中的歌曲切歌），“稍后播放”队列将会被清空
 
 ## 可用的鼠标、键盘快捷操作
 
@@ -32,6 +36,9 @@
 - 在我的列表按住`Ctrl`键可以进入列表拖动模式，此时可以用鼠标拖动列表调整列表的位置
 - 编辑列表名时按`Esc`键可以取消编辑
 - 按`F11`可以进入、退出全屏状态（v1.19.0新增）
+- 在歌曲添加弹窗中，若按住`Ctrl`键后再点击列表名，将不会自动关闭添加窗口，这对想要将同一首（一批）歌曲添加到多个列表时会很有用（v1.22.0新增）
+
+注：在macOS上`Ctrl`键对应`Command`键
 
 ## 歌曲无法试听与下载
 
@@ -42,7 +49,7 @@
 
 ### 提示 `getaddrinfo EAI_AGAIN ...` 或 `无法连接到服务器`
 
-尝试在在浏览器打开这个地址`http://ts.tempmusic.tk`，浏览器显示404是正常的，如果不是404那就证明所在网络无法访问接口服务器。
+尝试在在浏览器打开这个地址`http://ts.tempmusics.tk`，浏览器显示404是正常的，如果不是404那就证明所在网络无法访问接口服务器。
 若网页无法打开或打开来不是404，则可能是DNS的问题，可以尝试以下办法：
 
 1. 将DNS改成自动获取试试（注：改完可能需要清理下系统DNS缓存才生效）
@@ -61,11 +68,21 @@
 5. 若还不行请到这个链接查看详情：<https://github.com/lyswhut/lx-music-desktop/issues/5>
 6. 若没有在第5条链接中的第一条评论中看到接口无法使用的说明，则应该是你网络无法访问接口服务器的问题，如果接口有问题我会在那里说明。
 
-想要知道是不是自己网络的问题可以看看`http://ts.tempmusic.tk`能不能在浏览器打开，浏览器显示404是正常的，如果不是404那就证明所在网络无法访问接口服务器。
+想要知道是不是自己网络的问题可以看看`http://ts.tempmusics.tk`能不能在浏览器打开，浏览器显示404是正常的，如果不是404那就证明所在网络无法访问接口服务器。
 若网页无法打开或打来不是404，则应该是DNS的问题，可以尝试以下办法：
 
 1. 将DNS改成自动获取试试
 2. 手动把DNS改一下，不要用360的DNS，可以把DNS改成`223.6.6.6`、`8.8.8.8`
+
+### Windows版所有歌曲都提示 `音频加载错误，5秒后切换下一首`
+
+尝试关闭 Internet选项 的代理设置。
+
+如果你不知道怎么做，可以尝试按以下步骤去做：
+
+按<kbd>windows</kbd>+<kbd>r</kbd>键打开“运行”窗口，输入`inetcpl.cpl`后回车，在打开的 Internet选项 对话框中，切换到 连接 -> 局域网设置，在弹出的新窗口中把代理服务器下的勾去掉，如果自动配置下的勾也有被勾选，那么建议也去掉，最后按确定关闭所有弹窗。
+
+> 来源：<https://github.com/lyswhut/lx-music-desktop/issues/873#issuecomment-1146945724>
 
 ## 列表多选
 
@@ -110,7 +127,7 @@
 
 这些浏览器打开此窗口时界面可能是中文也可能是英文，英文的话按括号里的来
 
-1. 点击窗口顶部`应用程序(application)`
+1. 点击窗口顶部`应用程序(application)`（若找不到此选项，则可能是被折叠起来了，看看顶部菜单的`>>`）
 2. 展开左侧 `Cookies`
 3. 点击 `https://music.163.com`
 4. 在右侧窗口找到 `名称(Name)` 为 `MUSIC_U` 的这行，这行的第二列（`值(Value)`）内的那串内容就是`token`，双击它进入编辑状态，然后按`ctrl + c`键就可以将它复制
@@ -161,9 +178,26 @@
 
 ## 界面异常（界面显示不完整）
 
+### Windows 10、11界面异常、界面无法显示
+
+尝试添加运行参数 `--disable-gpu-sandbox` 启动，例如：`.\lx-music-desktop.exe --disable-gpu-sandbox`，添加方法可自行百度“给快捷方式加参数”。
+
+若以上方法无效，则尝试将 `--disable-gpu-sandbox` 逐个换成以下参数启动，直到恢复正常为止：
+
+- `--no-sandbox`
+- `-dha`
+- `--disable-gpu`
+
+:::caution
+这些参数会禁用程序的某些安全特性或降低程序性能，没有遇到问题不要使用它们！
+:::
+
+对于界面无法显示，任务栏里也没看到图标，但是任务管理器里面看到进程的问题，还可尝试更换软件安装目录（对于安装版需要先卸载再换目录安装，绿色版直接剪切移动即可，只要目录换了就行），<br />
+此方法的相关讨论看：<https://github.com/lyswhut/lx-music-desktop/issues/943#issuecomment-1217832186>
+
 ### Windows 7 下界面异常
 
-由于软件默认使用了透明窗口，根据Electron官方文档的[说明](https://electronjs.org/docs/api/frameless-window#%E5%B1%80%E9%99%90%E6%80%A7)：
+由于软件默认使用了透明窗口，根据Electron官方文档的[说明](https://www.electronjs.org/docs/latest/tutorial/window-customization#limitations)：
 > 在 windows 操作系统上, 当 DWM 被禁用时, 透明窗口将无法工作。
 
 因此，当 win7 没有使用**Aero**主题时界面将会显示异常，开启AERO的方法请自行百度：`win7开启Aero效果`（开启后可看到任务栏变透明）。<br>
@@ -334,9 +368,8 @@ Windows 7 未开启 Aero 效果时桌面歌词会有问题，详情看上面的 
 以下是目前可用的Scheme URL调用方式：
 
 - URL统一以`lxmusic://`开头
-- 此技术目前只支持 Windows、Mac系统
 - 若无特别说明，源的可用值为：`kw/kg/tx/wy/mg`
-- 若无特别说明，音质的可用值为：`128k/320k/flac/flac32bit`
+- 若无特别说明，音质的可用值为：`128k/320k/flac/flac24bit`
 
 目前支持两种传参方式：
 
@@ -431,7 +464,7 @@ send(EVENT_NAMES.inited, {
       name: '酷我音乐',
       type: 'music',  // 目前固定为 music
       actions: ['musicUrl'], // 目前固定为 ['musicUrl']
-      qualitys: ['128k', '320k', 'flac'], // 当前脚本的该源所支持获取的Url音质，有效的值有：['128k', '320k', 'flac']
+      qualitys: ['128k', '320k', 'flac', 'flac24bit'], // 当前脚本的该源所支持获取的Url音质，有效的值有：['128k', '320k', 'flac', 'flac24bit']
     },
   },
 })
@@ -473,8 +506,8 @@ send(EVENT_NAMES.inited, {
 
 | 事件名 | 描述
 | --- | ---
-| `inited` | 脚本初始化完成后发送给应用的事件名，发送该事件时需要传入以下信息：`{status, sources, openDevTools}`<br>`status`：初始化结果（`true`成功，`false`失败）<br>`openDevTools`：是否打开DevTools，此选项可用于开发脚本时的调试<br>`sources`：支持的源信息对象，<br>`sources[kw/kg/tx/wy/mg].name`：源的名字（目前非必须）<br>`sources[kw/kg/tx/wy/mg].type`：源类型，目前固定值需为`music`<br>`sources[kw/kg/tx/wy/mg].actions`：支持的actions，由于目前只支持`musicUrl`，所以固定传`['musicUrl']`即可<br>`sources[kw/kg/tx/wy/mg].qualitys`：该源支持的音质列表，有效的值为`['128k', '320k', 'flac']`，该字段用于控制应用可用的音质类型
-| `request` | 应用API请求事件名，回调入参：`handler({ source, action, info})`，回调必须返回`Promise`对象<br>`source`：音乐源，可能的值取决于初始化时传入的`sources`对象的源key值<br>`info`：请求附加信息，内容根据`action`变化<br>`action`：请求操作类型，目前只有`musicUrl`，即获取音乐URL链接，需要在 Promise 返回歌曲 url，`info`的结构：`{type, musicInfo}`，`info.type`：音乐质量，可能的值有`128k` / `320k` / `flac`（取决于初始化时对应源传入的`qualitys`值中的一个），`info.musicInfo`：音乐信息对象，里面有音乐ID、名字等信息
+| `inited` | 脚本初始化完成后发送给应用的事件名，发送该事件时需要传入以下信息：`{status, sources, openDevTools}`<br>`status`：初始化结果（`true`成功，`false`失败）<br>`openDevTools`：是否打开DevTools，此选项可用于开发脚本时的调试<br>`sources`：支持的源信息对象，<br>`sources[kw/kg/tx/wy/mg].name`：源的名字（目前非必须）<br>`sources[kw/kg/tx/wy/mg].type`：源类型，目前固定值需为`music`<br>`sources[kw/kg/tx/wy/mg].actions`：支持的actions，由于目前只支持`musicUrl`，所以固定传`['musicUrl']`即可<br>`sources[kw/kg/tx/wy/mg].qualitys`：该源支持的音质列表，有效的值为`['128k', '320k', 'flac', 'flac24bit']`，该字段用于控制应用可用的音质类型
+| `request` | 应用API请求事件名，回调入参：`handler({ source, action, info})`，回调必须返回`Promise`对象<br>`source`：音乐源，可能的值取决于初始化时传入的`sources`对象的源key值<br>`info`：请求附加信息，内容根据`action`变化<br>`action`：请求操作类型，目前只有`musicUrl`，即获取音乐URL链接，需要在 Promise 返回歌曲 url，`info`的结构：`{type, musicInfo}`，`info.type`：音乐质量，可能的值有`128k` / `320k` / `flac` / `flac24bit`（取决于初始化时对应源传入的`qualitys`值中的一个），`info.musicInfo`：音乐信息对象，里面有音乐ID、名字等信息
 | `updateAlert` | 显示源更新弹窗，发送该事件时的参数：`{log, updateUrl}`<br>`log`：更新日志，必传，字符串类型，内容可以使用`\n`换行，最大长度1024，超过此长度后将被截取超出的部分<br>`updateUrl`：更新地址，用于引导用户去该地址更新源，选传，需为http协议的url地址，最大长度1024<br>此事件每次运行脚本只能调用一次（源版本v1.2.0新增）<br>例子：`lx.send(lx.EVENT_NAMES.updateAlert, { log: 'hello world', updateUrl: 'https://xxx.com' })`
 
 
