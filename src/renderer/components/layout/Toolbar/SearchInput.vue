@@ -28,7 +28,7 @@ export default {
     const router = useRouter()
 
     watch(() => route.name, (newValue, oldValue) => {
-      if (oldValue == 'Search') {
+      if (oldValue == 'Search' && newValue != 'SongListDetail') {
         setTimeout(() => {
           if (appSetting['odc.isAutoClearSearchInput'] && searchText.value) searchText.value = ''
           if (appSetting['odc.isAutoClearSearchList']) setSearchText('')
@@ -48,12 +48,12 @@ export default {
     const tipSearch = debounce(async() => {
       if (searchText.value === '' && prevTempSearchSource) {
         tipList.value = []
-        music[prevTempSearchSource].tempSearch.cancelTempSearch()
+        music[prevTempSearchSource].tipSearch.cancelTipSearch()
         return
       }
       const { temp_source } = await getSearchSetting()
       prevTempSearchSource = temp_source
-      music[prevTempSearchSource].tempSearch.search(searchText.value).then(list => {
+      music[prevTempSearchSource].tipSearch.search(searchText.value).then(list => {
         tipList.value = list
       }).catch(() => {})
     }, 50)
@@ -64,7 +64,7 @@ export default {
     }
 
     const handleSearch = () => {
-      if (visibleList.value) visibleList.value = false
+      visibleList.value &&= false
       if (!searchText.value && route.path != '/search') {
         setSearchText('')
         return
@@ -83,13 +83,13 @@ export default {
       switch (action) {
         case 'focus':
           isFocused = true
-          if (!visibleList.value) visibleList.value = true
+          visibleList.value ||= true
           if (searchText.value) handleTipSearch()
           break
         case 'blur':
           isFocused = false
           setTimeout(() => {
-            if (visibleList.value) visibleList.value = false
+            visibleList.value &&= false
           }, 50)
           break
         case 'submit':

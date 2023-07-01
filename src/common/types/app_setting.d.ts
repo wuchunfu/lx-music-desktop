@@ -69,6 +69,16 @@ declare global {
       'common.playBarProgressStyle': 'mini' | 'full' | 'middle'
 
       /**
+       * 尝试自动更新
+       */
+      'common.tryAutoUpdate': boolean
+
+      /**
+       * 更新版本后是否显示变更日志
+       */
+      'common.showChangeLog': boolean
+
+      /**
        * 启动时自动播放歌曲
        */
       'player.startupAutoPlay': boolean
@@ -97,6 +107,16 @@ declare global {
        * 是否静音
        */
       'player.isMute': boolean
+
+      /**
+       * 播放速率
+       */
+      'player.playbackRate': number
+
+      /**
+       * 是否自动调整音频的音高以补偿对播放速率设置所做的更改
+       */
+      'player.preservesPitch': boolean
 
       /**
        * 音频输出设备id
@@ -147,6 +167,91 @@ declare global {
        * 定时暂停播放-倒计时时间
        */
       'player.waitPlayEndStopTime': string
+
+      /**
+       * 环境音效文件名
+       */
+      'player.soundEffect.convolution.fileName': string | null
+
+      /**
+       * 环境音效原始输出增益
+       */
+      'player.soundEffect.convolution.mainGain': number
+
+      /**
+       * 环境音效输出增益
+       */
+      'player.soundEffect.convolution.sendGain': number
+
+      /**
+       * 均衡器 31hz 值
+       */
+      'player.soundEffect.biquadFilter.hz31': number
+
+      /**
+       * 均衡器 62hz 值
+       */
+      'player.soundEffect.biquadFilter.hz62': number
+
+      /**
+       * 均衡器 125hz 值
+       */
+      'player.soundEffect.biquadFilter.hz125': number
+
+      /**
+       * 均衡器 250hz 值
+       */
+      'player.soundEffect.biquadFilter.hz250': number
+
+      /**
+       * 均衡器 500hz 值
+       */
+      'player.soundEffect.biquadFilter.hz500': number
+
+      /**
+       * 均衡器 1000hz 值
+       */
+      'player.soundEffect.biquadFilter.hz1000': number
+
+      /**
+       * 均衡器 2000hz 值
+       */
+      'player.soundEffect.biquadFilter.hz2000': number
+
+      /**
+       * 均衡器 4000hz 值
+       */
+      'player.soundEffect.biquadFilter.hz4000': number
+
+      /**
+       * 均衡器 8000hz 值
+       */
+      'player.soundEffect.biquadFilter.hz8000': number
+
+      /**
+       * 均衡器 16000hz 值
+       */
+      'player.soundEffect.biquadFilter.hz16000': number
+
+      /**
+       * 3D立体环绕是否启用
+       */
+      'player.soundEffect.panner.enable': boolean
+
+      /**
+       * 3D立体环绕声音距离
+       */
+      'player.soundEffect.panner.soundR': number
+
+      /**
+       * 3D立体环绕速度
+       */
+      'player.soundEffect.panner.speed': number
+
+      /**
+       * 升降声调
+       */
+      'player.soundEffect.pitchShifter.playbackRate': number
 
       /**
        * 是否启用音频加载失败时自动切歌
@@ -203,6 +308,11 @@ declare global {
        * 是否启用音频可视化
        */
       'desktopLyric.audioVisualization': boolean
+
+      /**
+       * 是否在全屏时隐藏歌词
+       */
+      'desktopLyric.fullscreenHide': boolean
 
       /**
        * 桌面歌词窗口宽度
@@ -305,6 +415,21 @@ declare global {
       'desktopLyric.style.isZoomActiveLrc': boolean
 
       /**
+       * 是否加粗逐字歌词字体
+       */
+      'desktopLyric.style.isFontWeightFont': boolean
+
+      /**
+       * 是否加粗逐行歌词字体
+       */
+      'desktopLyric.style.isFontWeightLine': boolean
+
+      /**
+       * 是否加粗翻译、罗马音字体
+       */
+      'desktopLyric.style.isFontWeightExtended': boolean
+
+      /**
        * 是否启用双击列表里的歌曲时自动切换到当前列表播放（仅对歌单、排行榜有效）
        */
       'list.isClickPlayList': boolean
@@ -385,6 +510,16 @@ declare global {
       'download.isEmbedLyric': boolean
 
       /**
+       * 是否在音频文件中嵌入翻译歌词
+       */
+      'download.isEmbedLyricT': boolean
+
+      /**
+       * 是否在音频文件中嵌入罗马音歌词
+       */
+      'download.isEmbedLyricR': boolean
+
+      /**
        * 歌曲源不可用时，是否启用换源下载
        */
       'download.isUseOtherSource': boolean
@@ -460,6 +595,11 @@ declare global {
       'tray.themeId': number
 
       /**
+       * 同步服务模式
+       */
+      'sync.mode': 'server' | 'client'
+
+      /**
        * 是否启用同步服务
        */
       'sync.enable': boolean
@@ -467,7 +607,17 @@ declare global {
       /**
        * 同步服务端口号
        */
-      'sync.port': '23332' | string
+      'sync.server.port': '23332' | string
+
+      /**
+       * 最大备份快照数
+       */
+      'sync.server.maxSsnapshotNum': number
+
+      /**
+       * 同步服务地址
+       */
+      'sync.client.host': string
 
       /**
        * 是否在离开搜索界面时自动清空搜索框

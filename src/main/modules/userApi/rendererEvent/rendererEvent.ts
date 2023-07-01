@@ -8,7 +8,7 @@ import { sendShowUpdateAlert, sendStatusChange } from '@main/modules/winMain'
 let userApi: LX.UserApi.UserApiInfo
 let apiStatus: LX.UserApi.UserApiStatus = { status: true }
 const requestQueue = new Map()
-const timeouts: Map<string, NodeJS.Timeout> = new Map()
+const timeouts = new Map<string, NodeJS.Timeout>()
 interface InitParams {
   params: {
     status: boolean
@@ -118,7 +118,9 @@ export const cancelRequest = (requestKey: string) => {
 }
 
 export const request = async({ requestKey, data }: LX.UserApi.UserApiRequestParams): Promise<any> => await new Promise((resolve, reject) => {
-  if (!userApi) return reject(new Error('user api is not load'))
+  if (!userApi) {
+    reject(new Error('user api is not load'))
+  }
 
   // const requestKey = `request__${Math.random().toString().substring(2)}`
   const timeout = timeouts.get(requestKey)

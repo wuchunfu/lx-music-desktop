@@ -113,7 +113,7 @@ export const updateSetting = (setting?: Partial<LX.AppSetting>, isInit: boolean 
 
   let originSetting: LX.AppSetting
   if (isInit) {
-    if (setting) setting = migrateSetting(setting)
+    setting &&= migrateSetting(setting)
     originSetting = { ...defaultSetting }
   } else originSetting = global.lx.appSetting
 
@@ -154,7 +154,15 @@ export const initHotKey = async() => {
   let localConfig = electronStore_hotKey.get('local') as LX.HotKeyConfig | null
   let globalConfig = electronStore_hotKey.get('global') as LX.HotKeyConfig | null
 
-  if (!localConfig) {
+  if (globalConfig) {
+    // 移除v2.2.0及之前设置的全局媒体快捷键注册
+    if (globalConfig.keys.MediaPlayPause) {
+      delete globalConfig.keys.MediaPlayPause
+      delete globalConfig.keys.MediaNextTrack
+      delete globalConfig.keys.MediaPreviousTrack
+      electronStore_hotKey.set('global', globalConfig)
+    }
+  } else {
     // migrate hotKey
     const config = await migrateHotKey()
     if (config) {
@@ -196,7 +204,7 @@ export const openDevTools = (webContents: Electron.WebContents) => {
 
 let userThemes: LX.Theme[]
 export const getAllThemes = () => {
-  if (!userThemes) userThemes = getStore(STORE_NAMES.THEME).get('themes') as LX.Theme[] | null ?? []
+  userThemes ??= getStore(STORE_NAMES.THEME).get('themes') as (LX.Theme[] | null) ?? []
   return {
     themes,
     userThemes,

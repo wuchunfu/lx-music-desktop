@@ -1,77 +1,49 @@
 // 设置窗口位置、大小
-let winX
-let winY
-let wasW
-let wasH
-let offset = 8
-let minWidth = 80
-let minHeight = 50
+export let minWidth = 80
+export let minHeight = 50
 
+
+// const updateBounds = (bounds: Bounds) => {
+//   bounds.x = bounds.x
+//   return bounds
+// }
+
+/**
+ *
+ * @param bounds 当前设置
+ * @param param 新设置（相对于当前设置）
+ * @returns
+ */
 export const getLyricWindowBounds = (bounds: Electron.Rectangle, { x = 0, y = 0, w = 0, h = 0 }: LX.DesktopLyric.NewBounds): Electron.Rectangle => {
   if (w < minWidth) w = minWidth
   if (h < minHeight) h = minHeight
 
   if (global.lx.appSetting['desktopLyric.isLockScreen']) {
     if (!global.envParams.workAreaSize) return bounds
-    wasW = (global.envParams.workAreaSize.width ?? 0) + offset
-    wasH = (global.envParams.workAreaSize.height ?? 0) + offset
+    const maxWinW = global.envParams.workAreaSize.width
+    const maxWinH = global.envParams.workAreaSize.height
 
-    if (w > wasW + offset) w = wasW + offset
-    if (h > wasH + offset) h = wasH + offset
-    if (x == null) {
-      if (bounds.x > wasW - w) {
-        x = wasW - w - bounds.x
-      } else if (bounds.x < -offset) {
-        x = bounds.x + offset
-      } else {
-        x = 0
-      }
-      if (bounds.y > wasH - h) {
-        y = wasH - h - bounds.y
-      } else if (bounds.y < -offset) {
-        y = bounds.y + offset
-      } else {
-        y = 0
-      }
-    }
-    winX = bounds.x + x
-    winY = bounds.y + y
+    if (w > maxWinW) w = maxWinW
+    if (h > maxWinH) h = maxWinH
 
-    if (x != 0) {
-      if (winX < -offset) {
-        winX = -offset
-      } else if (winX + w > wasW) {
-        winX = wasW - w
-      }
-    }
-    if (y != 0) {
-      if (winY < -offset) {
-        winY = -offset
-      } else if (winY + h > wasH) {
-        winY = wasH - h
-      }
-    }
+    const maxX = global.envParams.workAreaSize.width - w
+    const maxY = global.envParams.workAreaSize.height - h
 
-    x = winX
-    y = winY
+    x += bounds.x
+    y += bounds.y
 
-    if (x + w > wasW) w = wasW - x
-    if (y + h > wasH) h = wasH - y
+    if (x > maxX) x = maxX
+    else if (x < 0) x = 0
+
+    if (y > maxY) y = maxY
+    else if (y < 0) y = 0
   } else {
-    if (x == null) {
-      x = 0
-      y = 0
-    }
     y += bounds.y
     x += bounds.x
   }
 
-  bounds.width = w
-  bounds.height = h
-  bounds.x = x
-  bounds.y = y
   // console.log('util bounds', bounds)
-  return bounds
+  return { width: w, height: h, x, y }
 }
 
 
@@ -101,11 +73,15 @@ export const watchConfigKeys = [
   // 'desktopLyric.style.fontWeight',
   'desktopLyric.style.opacity',
   'desktopLyric.style.ellipsis',
+  'desktopLyric.style.isFontWeightFont',
+  'desktopLyric.style.isFontWeightLine',
+  'desktopLyric.style.isFontWeightExtended',
   'desktopLyric.style.isZoomActiveLrc',
   'common.langId',
   'player.isShowLyricTranslation',
   'player.isShowLyricRoma',
   'player.isPlayLxlrc',
+  'player.playbackRate',
 ] as const
 
 export const buildLyricConfig = (appSetting: Partial<LX.AppSetting>): Partial<LX.DesktopLyric.Config> => {
@@ -115,4 +91,29 @@ export const buildLyricConfig = (appSetting: Partial<LX.AppSetting>): Partial<LX
     if (key in appSetting) setting[key] = appSetting[key]
   }
   return setting
+}
+
+export const initWindowSize = (x: LX.AppSetting['desktopLyric.x'], y: LX.AppSetting['desktopLyric.y'], width: LX.AppSetting['desktopLyric.width'], height: LX.AppSetting['desktopLyric.height']) => {
+  if (x == null || y == null) {
+    if (width < minWidth) width = minWidth
+    if (height < minHeight) height = minHeight
+    if (global.envParams.workAreaSize) {
+      x = global.envParams.workAreaSize.width - width
+      y = global.envParams.workAreaSize.height - height
+    } else {
+      x = y = 0
+    }
+  } else {
+    let bounds = getLyricWindowBounds({ x, y, width, height }, { x: 0, y: 0, w: width, h: height })
+    x = bounds.x
+    y = bounds.y
+    width = bounds.width
+    height = bounds.height
+  }
+  return {
+    x,
+    y,
+    width,
+    height,
+  }
 }

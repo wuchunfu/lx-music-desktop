@@ -9,6 +9,7 @@ export const init = () => {
   lrc = new Lyric({
     shadowContent: true,
     activeLineClassName: 'active',
+    rate: setting['player.playbackRate'],
     isVertical: setting['desktopLyric.direction'] == 'vertical',
     onPlay(line, text) {
       setText(text, line)
@@ -31,6 +32,10 @@ export const init = () => {
 export const setLyricOffset = (offset: number) => {
   setTempOffset(offset)
   lrc.setOffset(offset)
+}
+
+export const setPlaybackRate = (rate: number) => {
+  lrc.setPlaybackRate(rate)
 }
 
 export const setLyric = () => {

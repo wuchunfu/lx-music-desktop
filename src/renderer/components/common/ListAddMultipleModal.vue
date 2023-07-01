@@ -8,7 +8,7 @@
           <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 0 42 42" space="preserve">
             <use xlink:href="#icon-addTo" />
           </svg>
-          <input :class="$style.newListInput" :value="newListName" type="text" :placeholder="$t('lists__new_list_input')" @keyup.enter="handleSaveList($event)" @blur="handleSaveList($event)">
+          <base-input :class="$style.newListInput" :value="newListName" :placeholder="$t('lists__new_list_input')" @keyup.enter="handleSaveList($event)" @blur="handleSaveList($event)" />
         </base-btn>
         <span v-for="i in spaceNum" :key="i" :class="$style.btn" />
       </div>
@@ -21,6 +21,7 @@ import { computed } from '@common/utils/vueTools'
 import { defaultList, loveList, userLists } from '@renderer/store/list/state'
 import { addListMusics, moveListMusics, createUserList } from '@renderer/store/list/action'
 import useKeyDown from '@renderer/utils/compositions/useKeyDown'
+import { useI18n } from '@/lang'
 
 export default {
   props: {
@@ -64,11 +65,12 @@ export default {
   emits: ['update:show', 'confirm'],
   setup(props) {
     const keyModDown = useKeyDown('mod')
+    const t = useI18n()
 
     const lists = computed(() => {
       return [
-        defaultList,
-        loveList,
+        { ...defaultList, name: t(defaultList.name) },
+        { ...loveList, name: t(loveList.name) },
         ...userLists,
       ].filter(l => !props.excludeListId.includes(l.id))
     })
@@ -213,16 +215,13 @@ export default {
   top: 0;
   width: 100%;
   height: 34px;
-  border: none;
-  padding: 0;
   line-height: 34px;
-  background: none;
-  outline: none;
+  background: none !important;
   font-size: 14px;
   text-align: center;
-  font-family: inherit;
   box-sizing: border-box;
   padding: 0 10px;
+  border-radius: 0;
   display: none;
 }
 

@@ -10,6 +10,7 @@ export const STORE_NAMES = {
   LRC_RAW: 'lyrics',
   LRC_EDITED: 'lyrics_edited',
   THEME: 'theme',
+  SOUND_EFFECT: 'sound_effect',
 } as const
 
 export const APP_EVENT_NAMES = {
@@ -23,6 +24,7 @@ export const LIST_IDS = {
   LOVE: 'love',
   TEMP: 'temp',
   DOWNLOAD: 'download',
+  PLAY_LATER: null,
 } as const
 
 export const DATA_KEYS = {
@@ -37,6 +39,8 @@ export const DATA_KEYS = {
   leaderboardSetting: 'leaderboardSetting',
   songListSetting: 'songListSetting',
   searchSetting: 'searchSetting',
+
+  lastStartInfo: 'lastStartInfo',
 } as const
 
 export const DEFAULT_SETTING = {
@@ -72,3 +76,24 @@ export const DOWNLOAD_STATUS = {
 } as const
 
 export const QUALITYS = ['flac24bit', 'flac', 'wav', 'ape', '320k', '192k', '128k'] as const
+
+export const SYNC_CODE = {
+  helloMsg: 'Hello~::^-^::~v3~',
+  idPrefix: 'OjppZDo6',
+  authMsg: 'lx-music auth::',
+  authFailed: 'Auth failed',
+  missingAuthCode: 'Missing auth code',
+  getServiceIdFailed: 'Get service id failed',
+  connectServiceFailed: 'Connect service failed',
+  connecting: 'Connecting...',
+  unknownServiceAddress: 'Unknown service address',
+  msgBlockedIp: 'Blocked IP',
+  msgConnect: 'lx-music connect',
+  msgAuthFailed: 'Auth failed',
+} as const
+
+export const SYNC_CLOSE_CODE = {
+  normal: 1000,
+  failed: 4100,
+} as const
+

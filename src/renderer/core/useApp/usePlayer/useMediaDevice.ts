@@ -14,35 +14,40 @@ const getDevices = async() => {
 
 export default () => {
   let prevDeviceLabel: string | null = null
+  let prevDeviceId = ''
 
-  const setMediaDevice = async(mediaDeviceId: string) => {
-    let label = prevDeviceLabel
+  const getMediaDevice = async(deviceId: string) => {
     const devices = await getDevices()
-    let device = devices.find(device => device.deviceId === mediaDeviceId)
-    if (device) {
-      mediaDeviceId = device.deviceId
-      label = device.label
-    } else {
-      mediaDeviceId = 'default'
-      device = devices.find(device => device.deviceId === mediaDeviceId)
-      if (device) label = device.label
+    let device = devices.find(device => device.deviceId === deviceId)
+    if (!device) {
+      deviceId = 'default'
+      device = devices.find(device => device.deviceId === deviceId)
     }
 
+    return device ? { label: device.label, deviceId: device.deviceId } : { label: '', deviceId: '' }
+  }
+  const setMediaDevice = async(deviceId: string, label: string) => {
     prevDeviceLabel = label
     // console.log(device)
-    setMediaDeviceId(mediaDeviceId).catch((err: any) => {
+    setMediaDeviceId(deviceId).then(() => {
+      prevDeviceId = deviceId
+      saveMediaDeviceId(deviceId)
+    }).catch((err: any) => {
       console.log(err)
-      saveMediaDeviceId('default')
+      setMediaDeviceId('default').finally(() => {
+        prevDeviceId = 'default'
+        saveMediaDeviceId('default')
+      })
     })
   }
 
-  const handleDeviceChangeStopPlay = (device: MediaDeviceInfo, mediaDeviceId: string) => {
+  const handleDeviceChangeStopPlay = (label: string) => {
     // console.log(device)
-    // console.log(this.appSetting.player['isMediaDeviceRemovedStopPlay,'] this.isPlay, device.label, this.prevDeviceLabel)
+    // console.log(appSetting['player.isMediaDeviceRemovedStopPlay'], isPlay.value, label, prevDeviceLabel)
     if (
       appSetting['player.isMediaDeviceRemovedStopPlay'] &&
       isPlay.value &&
-      device.label != prevDeviceLabel
+      label != prevDeviceLabel
     ) {
       window.lx.isPlayedStop = true
       pause()
@@ -50,26 +55,21 @@ export default () => {
   }
 
   const handleMediaListChange = async() => {
-    let mediaDeviceId = appSetting['player.mediaDeviceId']
-    const devices = await getDevices()
-    let device = devices.find(device => device.deviceId === mediaDeviceId)
-    if (!device) device = devices.find(device => device.deviceId === 'default')
-    // @ts-expect-error
-    if (!device) device = { label: '', deviceId: '' }
+    const mediaDeviceId = appSetting['player.mediaDeviceId']
+    const device = await getMediaDevice(mediaDeviceId)
 
-    // @ts-expect-error
-    handleDeviceChangeStopPlay(device, mediaDeviceId)
+    handleDeviceChangeStopPlay(device.label)
 
-    setMediaDeviceId(device!.deviceId).catch((err: any) => {
-      console.log(err)
-      saveMediaDeviceId('default')
-    })
+    if (device.deviceId == mediaDeviceId) prevDeviceLabel = device.label
+    else void setMediaDevice(device.deviceId, device.label)
   }
 
-  watch(() => appSetting['player.mediaDeviceId'], setMediaDevice)
+  watch(() => appSetting['player.mediaDeviceId'], (id) => {
+    if (prevDeviceId == id) return
+    void getMediaDevice(id).then(async({ deviceId, label }) => setMediaDevice(deviceId, label))
+  })
 
-
-  void setMediaDevice(appSetting['player.mediaDeviceId'])
+  void getMediaDevice(appSetting['player.mediaDeviceId']).then(async({ deviceId, label }) => setMediaDevice(deviceId, label))
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   navigator.mediaDevices.addEventListener('devicechange', handleMediaListChange)

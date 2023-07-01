@@ -148,14 +148,22 @@ const saveMeta = (downloadInfo: LX.Download.ListItem) => {
       : Promise.resolve(null),
   ]
   void Promise.all(tasks).then(([imgUrl, lyrics]) => {
-    if (lyrics?.lyric) lyrics.lyric = fixKgLyric(lyrics.lyric)
+    const lrcData = {
+      lrc: '',
+      tlrc: null as string | null,
+      rlrc: null as string | null,
+    }
+    if (lyrics) {
+      lrcData.lrc = lyrics.lyric
+      if (appSetting['download.isEmbedLyricT'] && lyrics.tlyric) lrcData.tlrc = lyrics.tlyric
+      if (appSetting['download.isEmbedLyricR'] && lyrics.rlyric) lrcData.rlrc = lyrics.rlyric
+    }
     void window.lx.worker.download.writeMeta(downloadInfo.metadata.filePath, {
       title: downloadInfo.metadata.musicInfo.name,
       artist: downloadInfo.metadata.musicInfo.singer,
       album: downloadInfo.metadata.musicInfo.meta.albumName,
       APIC: imgUrl,
-      lyrics: lyrics?.lyric ?? null,
-    })
+    }, lrcData)
   })
 }
 
@@ -172,11 +180,13 @@ const downloadLyric = (downloadInfo: LX.Download.ListItem) => {
   }).then(lrcs => {
     if (lrcs.lyric) {
       lrcs.lyric = fixKgLyric(lrcs.lyric)
-      let lyric = lrcs.lyric
-      if (appSetting['download.isDownloadTLrc'] && lrcs.tlyric) lyric += '\n' + lrcs.tlyric + '\n'
-      if (appSetting['download.isDownloadRLrc'] && lrcs.rlyric) lyric += '\n' + lrcs.rlyric + '\n'
-      void window.lx.worker.download.saveLrc(downloadInfo.metadata.filePath.replace(/(mp3|flac|ape|wav)$/, 'lrc'),
-        lyric, appSetting['download.lrcFormat'])
+      const lrcData = {
+        lrc: lrcs.lyric,
+        tlrc: appSetting['download.isDownloadTLrc'] && lrcs.tlyric ? lrcs.tlyric : null,
+        rlrc: appSetting['download.isDownloadRLrc'] && lrcs.rlyric ? lrcs.rlyric : null,
+      }
+      void window.lx.worker.download.saveLrc(lrcData, downloadInfo.metadata.filePath.replace(/(mp3|flac|ape|wav)$/, 'lrc'),
+        appSetting['download.lrcFormat'])
     }
   })
 }
@@ -255,10 +265,10 @@ const handleStartTask = async(downloadInfo: LX.Download.ListItem) => {
         setProgress(downloadInfo, event.data)
         break
       case 'error':
-        handleError(downloadInfo, event.data.error == null
-          ? event.data.message ?? undefined
-          // @ts-expect-error
-          : window.i18n.t(event.data.error) + (event.data.message ?? ''))
+        handleError(downloadInfo, event.data.error
+          ? window.i18n.t(event.data.error) + (event.data.message ?? '')
+          : event.data.message,
+        )
         break
       default:
         break
@@ -368,15 +378,13 @@ export const pauseDownloadTasks = async(list: LX.Download.ListItem[]) => {
 export const removeDownloadTasks = async(ids: string[]) => {
   await downloadTasksRemove(ids)
 
-  const listSet = new Set<string>()
-  for (const item of downloadList) listSet.add(item.id)
-  for (const id of ids) listSet.delete(id)
+  const idsSet = new Set<string>(ids)
   const newList = downloadList.filter(task => {
     if (runingTask.has(task.id)) {
       void window.lx.worker.download.removeTask(task.id)
       runingTask.delete(task.id)
     }
-    return listSet.has(task.id)
+    return !idsSet.has(task.id)
   })
   downloadList.splice(0, downloadList.length)
   arrPush(downloadList, newList)

@@ -2,7 +2,7 @@
 
 export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
   const meta: Record<string, any> = {
-    songId: oldMusicInfo.songmid, // 歌曲ID，mg源为copyrightId，local为文件路径
+    songId: oldMusicInfo.songmid, // 歌曲ID，local为文件路径
     albumName: oldMusicInfo.albumName, // 歌曲专辑名称
     picUrl: oldMusicInfo.img, // 歌曲图片链接
   }
@@ -117,4 +117,14 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
   }
 
   return musicInfo
+}
+
+export const filterMusicList = <T extends LX.Music.MusicInfo>(list: T[]): T[] => {
+  const ids = new Set<string>()
+  return list.filter(s => {
+    if (!s.id || ids.has(s.id) || !s.name) return false
+    if (s.singer == null) s.singer = ''
+    ids.add(s.id)
+    return true
+  })
 }

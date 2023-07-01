@@ -20,7 +20,7 @@ import {
   setAllStatus,
   addPlayedList,
   clearPlayedList,
-  resetPlayerMusicInfo,
+  // resetPlayerMusicInfo,
 } from '@renderer/store/player/action'
 
 import { appSetting } from '@renderer/store/setting'
@@ -30,6 +30,8 @@ import useVolume from './useVolume'
 import useWatchList from './useWatchList'
 import { HOTKEY_PLAYER } from '@common/hotKey'
 import { playNext, pause, playPrev, togglePlay } from '@renderer/core/player'
+import usePlaybackRate from './usePlaybackRate'
+import useSoundEffect from './useSoundEffect'
 
 
 export default () => {
@@ -40,6 +42,8 @@ export default () => {
   usePlayEvent()
   useLyric()
   useVolume()
+  useSoundEffect()
+  usePlaybackRate()
   useWatchList()
 
   const handlePlayNext = () => {
@@ -68,9 +72,12 @@ export default () => {
   }
   const handleEnded = () => {
     // setTimeout(() => {
-    if (window.lx.isPlayedStop) return setAllStatus(t('player__end'))
-    resetPlayerMusicInfo()
-    window.app_event.stop()
+    if (window.lx.isPlayedStop) {
+      setAllStatus(t('player__end'))
+      return
+    }
+    // resetPlayerMusicInfo()
+    // window.app_event.stop()
     setAllStatus(t('player__end'))
     void playNext(true)
     // })

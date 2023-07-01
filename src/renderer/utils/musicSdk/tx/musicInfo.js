@@ -72,12 +72,12 @@ export default (songmid) => {
     let albumId = ''
     let albumName = ''
     if (item.album) {
-      albumName = item.album.title
+      albumName = item.album.name
       albumId = item.album.mid
     }
     return {
       singer: getSinger(item.singer),
-      name: item.title,
+      name: item.name,
       albumName,
       albumId,
       source: 'tx',
@@ -87,7 +87,7 @@ export default (songmid) => {
       strMediaMid: item.file.media_mid,
       songmid: item.mid,
       img: (albumId === '' || albumId === '空')
-        ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singer[0]?.mid}.jpg`
+        ? item.singer?.length ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singer[0].mid}.jpg` : ''
         : `https://y.gtimg.cn/music/photo_new/T002R500x500M000${albumId}.jpg`,
       types,
       _types,

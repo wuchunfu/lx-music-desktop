@@ -51,8 +51,11 @@ export default () => {
           break
         case 'playListPart_v2':
           listData = configData.data
+          listData.list = filterMusicList(listData.list).map(m => fixNewMusicInfoQuality(m))
           break
-        default: return showImportTip(configData.type)
+        default:
+          showImportTip(configData.type)
+          return
       }
 
       const targetList = [defaultList, loveList, ...userLists].find(l => l.id == listData.id)

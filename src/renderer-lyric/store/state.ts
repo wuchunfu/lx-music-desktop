@@ -26,11 +26,15 @@ export const setting = shallowReactive<LX.DesktopLyric.Config>({
   // 'desktopLyric.style.fontWeight': true,
   'desktopLyric.style.opacity': 95,
   'desktopLyric.style.ellipsis': false,
+  'desktopLyric.style.isFontWeightFont': false,
+  'desktopLyric.style.isFontWeightLine': false,
+  'desktopLyric.style.isFontWeightExtended': false,
   'desktopLyric.style.isZoomActiveLrc': true,
   'common.langId': 'zh-cn',
   'player.isShowLyricTranslation': false,
   'player.isShowLyricRoma': false,
   'player.isPlayLxlrc': false,
+  'player.playbackRate': 1,
 })
 
 // export const themeList = markRaw([
@@ -76,7 +80,7 @@ export const setting = shallowReactive<LX.DesktopLyric.Config>({
 //   },
 // ])
 
-// export declare type Status = 'playing' | 'paused' | 'stopped'
+// export type Status = 'playing' | 'paused' | 'stopped'
 
 // export const status = ref<Status>('stopped')
 export const isPlay = ref(false)

@@ -2,7 +2,7 @@ import { ref, reactive, shallowRef, markRaw, computed, watch } from '@common/uti
 import { windowSizeList as configWindowSizeList } from '@common/config'
 import { appSetting } from './setting'
 import pkg from '../../../package.json'
-import { ProgressInfo } from 'electron-updater'
+import { type ProgressInfo } from 'electron-updater'
 import music from '@renderer/utils/musicSdk'
 process.versions.app = pkg.version
 
@@ -27,27 +27,51 @@ export const proxy: {
 }
 export const sync: {
   enable: boolean
-  port: string
+  mode: LX.AppSetting['sync.mode']
   isShowSyncMode: boolean
+  isShowAuthCodeModal: boolean
   deviceName: string
-  status: {
-    status: boolean
-    message: string
-    address: string[]
-    code: string
-    devices: LX.Sync.KeyInfo[]
+  server: {
+    port: string
+    status: {
+      status: boolean
+      message: string
+      address: string[]
+      code: string
+      devices: LX.Sync.ServerKeyInfo[]
+    }
+  }
+  client: {
+    host: string
+    status: {
+      status: boolean
+      message: string
+      address: string[]
+    }
   }
 } = reactive({
   enable: false,
-  port: '',
+  mode: 'server',
   isShowSyncMode: false,
+  isShowAuthCodeModal: false,
   deviceName: '',
-  status: {
-    status: false,
-    message: '',
-    address: [],
-    code: '',
-    devices: [],
+  server: {
+    port: '',
+    status: {
+      status: false,
+      message: '',
+      address: [],
+      code: '',
+      devices: [],
+    },
+  },
+  client: {
+    host: '',
+    status: {
+      status: false,
+      message: '',
+      address: [],
+    },
   },
 })
 
@@ -85,23 +109,19 @@ export const versionInfo = window.lxData.versionInfo = reactive<{
     history?: LX.VersionInfo[]
   } | null
   showModal: boolean
-  isError: boolean
-  isTimeOut: boolean
-  isUnknow: boolean
-  isDownloaded: boolean
-  isDownloading: boolean
-  isLatestVer: boolean
+  isUnknown: boolean
+  isLatest: boolean
+  reCheck: boolean
+  status: LX.UpdateStatus
   downloadProgress: ProgressInfo | null
 }>({
   version: pkg.version,
   newVersion: null,
   showModal: false,
-  isError: false,
-  isTimeOut: false,
-  isUnknow: false,
-  isDownloaded: false,
-  isDownloading: false,
-  isLatestVer: false,
+  reCheck: false,
+  isUnknown: false,
+  isLatest: false,
+  status: 'checking',
   downloadProgress: null,
 })
 export const userApi = reactive<{
@@ -115,6 +135,9 @@ export const userApi = reactive<{
   message: 'initing',
   apis: {},
 })
+
+export const isShowChangeLog = ref(false)
+
 
 export const isFullscreen = ref(false)
 watch(isFullscreen, isFullscreen => {

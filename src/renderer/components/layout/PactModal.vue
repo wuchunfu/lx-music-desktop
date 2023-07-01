@@ -12,20 +12,20 @@
         <p><strong>5、</strong>由于使用本软件产生的包括由于本协议或由于使用或无法使用本软件而引起的任何性质的任何直接、间接、特殊、偶然或结果性损害（包括但不限于因商誉损失、停工、计算机故障或故障引起的损害赔偿，或任何及所有其他商业损害或损失）由使用者负责。</p>
         <p><strong>6、</strong>本项目完全免费，且开源发布于&nbsp;<span class="hover underline" @click="openUrl('https://github.com/lyswhut/lx-music-desktop#readme')">GitHub</span>&nbsp;面向全世界人用作对技术的学习交流，本软件不对项目内的技术可能存在违反当地法律法规的行为作保证，<strong>禁止在违反当地法律法规的情况下使用本软件</strong>，对于使用者在明知或不知当地法律法规不允许的情况下使用本软件所造成的任何违法违规行为由使用者承担，本软件不承担由此造成的任何直接、间接、特殊、偶然或结果性责任。</p><br>
         <p><strong>*</strong>&nbsp;若协议更新，恕不另行通知，可到开源地址查看。</p>
-        <p><strong>*</strong>&nbsp;本软件的初衷是帮助官方音乐平台简化数据后代为展示，帮助使用者根据歌曲名、艺术家等关键字快速地定位所需内容所在的音乐平台。</p>
-        <p><strong>*</strong>&nbsp;音乐平台不易，建议到对应音乐平台支持正版资源。</p><br>
+        <p><strong>*</strong>&nbsp;音乐平台不易，建议到对应音乐平台支持正版资源。</p>
+        <p><strong>*</strong>&nbsp;本项目仅用于对技术可行性的探索及研究，不接受任何商业（包括但不限于广告等）合作及捐赠。</p><br>
         <p v-if="!isAgreePact"><strong>若你（使用者）接受以上协议，请点击下面的“接受”按钮签署本协议，若不接受，请点击“不接受”后退出软件并清除本软件的所有数据。</strong></p>
       </div>
       <div v-if="!isAgreePact" :class="$style.btns">
         <base-btn :class="$style.btn" @click="handleClose(true)">{{ $t('not_agree') }}</base-btn>
-        <base-btn :class="$style.btn" :disabled="!btnEnable" @click="handleClick()">{{ $t('agree') }} {{ timeStr }}</base-btn>
+        <base-btn :class="$style.btn" :disabled="!btnEnable" @click="handleClick">{{ $t('agree') }} {{ timeStr }}</base-btn>
       </div>
     </main>
   </material-modal>
 </template>
 
 <script>
-import { quitApp } from '@renderer/utils/ipc'
+import { checkUpdate, quitApp } from '@renderer/utils/ipc'
 import { openUrl } from '@common/utils/electron'
 import { isShowPact } from '@renderer/store'
 import { appSetting, saveAgreePact } from '@renderer/store/setting'
@@ -75,6 +75,8 @@ export default {
         this.$dialog({
           message: Buffer.from('e69cace8bdafe4bbb6e5ae8ce585a8e5858de8b4b9e4b894e5bc80e6ba90efbc8ce5a682e69e9ce4bda0e698afe88ab1e992b1e8b4ade4b9b0e79a84efbc8ce8afb7e79bb4e68ea5e7bb99e5b7aee8af84efbc810a0a5468697320736f667477617265206973206672656520616e64206f70656e20736f757263652e', 'hex').toString(),
           confirmButtonText: Buffer.from('e5a5bde79a8420284f4b29', 'hex').toString(),
+        }).then(() => {
+          checkUpdate()
         })
       }, 2e3)
     },

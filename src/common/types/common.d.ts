@@ -65,9 +65,7 @@ declare namespace LX {
 
   interface HotKeyConfig {
     enable: boolean
-    keys: {
-      [key: string]: HotKey
-    }
+    keys: Record<string, HotKey>
   }
   interface HotKeyConfigAll {
     local: HotKeyConfig
@@ -104,6 +102,7 @@ declare namespace LX {
     prev: boolean
   }
 
+  type UpdateStatus = 'downloaded' | 'downloading' | 'error' | 'checking' | 'idle'
   interface VersionInfo {
     version: string
     desc: string

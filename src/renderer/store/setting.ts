@@ -21,7 +21,7 @@ export const mergeSetting = (newSetting: Partial<LX.AppSetting>) => {
 }
 
 export const updateSetting = window.lxData.updateSetting = (setting: Partial<LX.AppSetting>) => {
-  console.warn(setting)
+  // console.warn(setting)
   void saveSetting(setting)
 }
 
@@ -55,6 +55,14 @@ export const saveVolume = (volume: number) => {
  */
 export const saveVolumeIsMute = (isMute: boolean) => {
   updateSetting({ 'player.isMute': isMute })
+}
+
+/**
+ * 设置播放速率
+ * @param rate 播放速率
+ */
+export const savePlaybackRate = (rate: number) => {
+  updateSetting({ 'player.playbackRate': rate })
 }
 
 

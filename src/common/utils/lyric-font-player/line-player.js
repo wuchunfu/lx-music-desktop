@@ -1,7 +1,7 @@
 const { getNow, TimeoutTools } = require('./utils')
 
 const timeFieldExp = /^(?:\[[\d:.]+\])+/g
-const timeExp = /[\d:.]+/g
+const timeExp = /\d{1,3}(:\d{1,3}){0,2}(?:\.\d{1,3})/g
 const tagRegMap = {
   title: 'ti',
   artist: 'ar',
@@ -11,6 +11,15 @@ const tagRegMap = {
 }
 
 const timeoutTools = new TimeoutTools()
+
+const t_rxp_1 = /^0+(\d+)/
+const t_rxp_2 = /:0+(\d+)/g
+const t_rxp_3 = /\.0+(\d+)/
+const formatTimeLabel = (label) => {
+  return label.replace(t_rxp_1, '$1')
+    .replace(t_rxp_2, ':$1')
+    .replace(t_rxp_3, '.$1')
+}
 
 const parseExtendedLyric = (lrcLinesMap, extendedLyric) => {
   const extendedLines = extendedLyric.split(/\r\n|\n|\r/)
@@ -24,8 +33,7 @@ const parseExtendedLyric = (lrcLinesMap, extendedLyric) => {
         const times = timeField.match(timeExp)
         if (times == null) continue
         for (let time of times) {
-          if (!time.includes('.')) time += '.0'
-          const timeStr = time.replace(/(?:\.0+|0+)$/, '')
+          const timeStr = formatTimeLabel(time)
           const targetLine = lrcLinesMap[timeStr]
           if (targetLine) targetLine.extendedLyrics.push(text)
         }
@@ -35,7 +43,7 @@ const parseExtendedLyric = (lrcLinesMap, extendedLyric) => {
 }
 
 module.exports = class LinePlayer {
-  constructor({ offset = 0, onPlay = function() { }, onSetLyric = function() { } } = {}) {
+  constructor({ offset = 0, rate = 1, onPlay = function() { }, onSetLyric = function() { } } = {}) {
     this.tags = {}
     this.lines = null
     this.onPlay = onPlay
@@ -46,6 +54,7 @@ module.exports = class LinePlayer {
     this.offset = offset
     this._performanceTime = 0
     this._startTime = 0
+    this._rate = rate
   }
 
   _init() {
@@ -84,18 +93,16 @@ module.exports = class LinePlayer {
           const times = timeField.match(timeExp)
           if (times == null) continue
           for (let time of times) {
-            if (!time.includes('.')) time += '.0'
-            const timeStr = time.replace(/(?:\.0+|0+)$/, '')
+            const timeStr = formatTimeLabel(time)
             if (linesMap[timeStr]) {
               linesMap[timeStr].extendedLyrics.push(text)
               continue
             }
             const timeArr = timeStr.split(':')
-            if (timeArr.length < 3) timeArr.unshift(0)
-            if (timeArr[2].indexOf('.') > -1) {
-              timeArr.push(...timeArr[2].split('.'))
-              timeArr.splice(2, 1)
-            } else if (!timeArr[2]) timeArr[2] = '0'
+            if (timeArr.length > 3) continue
+            else if (timeArr.length < 3) for (let i = 3 - timeArr.length; i--;) timeArr.unshift('0')
+            if (timeArr[2].indexOf('.') > -1) timeArr.splice(2, 1, ...timeArr[2].split('.'))
+
             linesMap[timeStr] = {
               time: parseInt(timeArr[0]) * 60 * 60 * 1000 + parseInt(timeArr[1]) * 60 * 1000 + parseInt(timeArr[2]) * 1000 + parseInt(timeArr[3] || 0),
               text,
@@ -115,7 +122,7 @@ module.exports = class LinePlayer {
   }
 
   _currentTime() {
-    return getNow() - this._performanceTime + this._startTime
+    return (getNow() - this._performanceTime) * this._rate + this._startTime
   }
 
   _findCurLineNum(curTime, startIndex = 0) {
@@ -142,14 +149,14 @@ module.exports = class LinePlayer {
 
     if (driftTime >= 0 || this.curLineNum === 0) {
       let nextLine = this.lines[this.curLineNum + 1]
-      this.delay = nextLine.time - curLine.time - driftTime
+      const delay = (nextLine.time - curLine.time - driftTime) / this._rate
 
-      if (this.delay > 0) {
+      if (delay > 0) {
         if (this.isPlay) {
           timeoutTools.start(() => {
             if (!this.isPlay) return
             this._refresh()
-          }, this.delay)
+          }, delay)
         }
         this.onPlay(this.curLineNum, curLine.text, currentTime)
         return
@@ -189,6 +196,13 @@ module.exports = class LinePlayer {
       this.curLineNum = curLineNum
       this.onPlay(curLineNum, this.lines[curLineNum].text, currentTime)
     }
+  }
+
+  setPlaybackRate(rate) {
+    this._rate = rate
+    if (!this.lines.length) return
+    if (!this.isPlay) return
+    this.play(this._currentTime())
   }
 
   setLyric(lyric, extendedLyrics) {

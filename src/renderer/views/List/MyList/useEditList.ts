@@ -1,4 +1,4 @@
-import { ref, nextTick, useCssModule, Ref } from '@common/utils/vueTools'
+import { ref, nextTick, useCssModule, type Ref } from '@common/utils/vueTools'
 import { userLists } from '@renderer/store/list/state'
 import { updateUserList, createUserList } from '@renderer/store/list/action'
 
@@ -11,7 +11,7 @@ export default ({ dom_lists_list }: {
   const styles = useCssModule()
 
   const handleRename = (index: number) => {
-    console.log(index)
+    // console.log(index)
     const dom = dom_lists_list.value?.querySelectorAll('.user-list')[index]
     if (!dom) return
     void nextTick(() => {

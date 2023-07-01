@@ -1,21 +1,41 @@
 <template lang="pug">
 dt#sync
-  | {{$t('setting__sync')}}
-  button(class="help-btn" @click="openUrl('https://lyswhut.github.io/lx-music-doc/desktop/faq/sync')" :aria-label="$t('setting__sync_tip')")
+  | {{ $t('setting__sync') }}
+  button(class="help-btn" :aria-label="$t('setting__sync_tip')" @click="openUrl('https://lyswhut.github.io/lx-music-doc/desktop/faq/sync')")
     svg-icon(name="help-circle-outline")
 dd
-  base-checkbox(id="setting_sync_enable" :modelValue="appSetting['sync.enable']" @update:modelValue="updateSetting({ 'sync.enable': $event })" :label="syncEnableTitle")
-  div
-    p.small {{$t('setting__sync_auth_code', { code: sync.status.code || '' })}}
-    p.small {{$t('setting__sync_address', { address: sync.status.address.join(', ') || '' })}}
-    p.small {{$t('setting__sync_device', { devices: syncDevices })}}
-    p
-      base-btn.btn(min :disabled="!sync.status.status" @click="refreshSyncCode") {{$t('setting__sync_refresh_code')}}
+  base-checkbox(id="setting_sync_enable" :model-value="appSetting['sync.enable']" :label="$t('setting__sync_enable')" @update:model-value="updateSetting({ 'sync.enable': $event })")
+
 dd
-  h3#sync_port {{$t('setting__sync_port')}}
+  h3#sync_mode {{ $t('setting__sync_mode') }}
   div
-    p
-      base-input.gap-left(:modelValue="appSetting['sync.port']" @update:modelValue="setSyncPort" :placeholder="$t('setting__sync_port_tip')")
+    base-checkbox.gap-left(id="setting_sync_mode_server" :disabled="sync.enable" :model-value="appSetting['sync.mode']" need value="server" :label="$t('setting__sync_mode_server')" @update:model-value="updateSetting({ 'sync.mode': $event })")
+    base-checkbox.gap-left(id="setting_sync_mode_client" :disabled="sync.enable" :model-value="appSetting['sync.mode']" need value="client" :label="$t('setting__sync_mode_client')" @update:model-value="updateSetting({ 'sync.mode': $event })")
+
+
+dd(v-if="sync.mode == 'client'")
+  h3 {{ $t('setting__sync_client_mode') }}
+  div
+    .p.small {{ $t('setting__sync_client_status', { status: clientStatus }) }}
+    .p.small {{ $t('setting__sync_client_address', { address: sync.client.status.address.join(', ') || '' }) }}
+    .p
+      .p.small {{ $t('setting__sync_client_host') }}
+      div
+        base-input.gap-left(:class="$style.hostInput" :model-value="appSetting['sync.client.host']" :disabled="sync.enable" :placeholder="$t('setting__sync_client_host_tip')" @update:model-value="setSyncClientHost")
+dd(v-else)
+  h3 {{ syncEnableServerTitle }}
+  div
+    .p.small {{ $t('setting__sync_server_auth_code', { code: sync.server.status.code || '' }) }}
+    .p.small {{ $t('setting__sync_server_address', { address: sync.server.status.address.join(', ') || '' }) }}
+    .p.small {{ $t('setting__sync_server_device', { devices: syncDevices }) }}
+    .p
+      base-btn.btn(min :disabled="!sync.server.status.status" @click="refreshSyncCode") {{ $t('setting__sync_server_refresh_code') }}
+    .p
+      .p.small {{ $t('setting__sync_server_port') }}
+      div
+        base-input.gap-left(:class="$style.portInput" :model-value="appSetting['sync.server.port']" :disabled="sync.enable" type="number" :placeholder="$t('setting__sync_server_port_tip')" @update:model-value="setSyncServerPort")
+
+
 </template>
 
 <script>
@@ -26,6 +46,7 @@ import { openUrl } from '@common/utils/electron'
 import { useI18n } from '@renderer/plugins/i18n'
 import { appSetting, updateSetting } from '@renderer/store/setting'
 import { debounce } from '@common/utils/common'
+import { SYNC_CODE } from '@common/constants'
 
 export default {
   name: 'SettingSync',
@@ -33,19 +54,39 @@ export default {
     const t = useI18n()
 
 
-    const syncEnableTitle = computed(() => {
-      let title = t('setting__sync_enable')
-      if (sync.status.message) {
-        title += ` [${sync.status.message}]`
+    const syncEnableServerTitle = computed(() => {
+      let title = t('setting__sync_server_mode')
+      if (sync.server.status.message) {
+        title += ` [${sync.server.status.message}]`
       }
-      // else if (this.sync.status.address.length) {
-      //   // title += ` [${this.sync.status.address.join(', ')}]`
+      // else if (this.sync.server.status.address.length) {
+      //   // title += ` [${this.sync.server.status.address.join(', ')}]`
       // }
       return title
     })
+
+    const clientStatus = computed(() => {
+      let status
+      switch (sync.client.status.message) {
+        case SYNC_CODE.msgBlockedIp:
+          status = t('setting__sync_code_blocked_ip')
+          break
+        case SYNC_CODE.authFailed:
+          status = t('setting__sync_code_fail')
+          break
+        default:
+          status = sync.client.status.message
+            ? sync.client.status.message
+            : sync.client.status.status
+              ? t('setting_sync_status_enabled')
+              : t('sync_status_disabled')
+          break
+      }
+      return status
+    })
     const syncDevices = computed(() => {
-      return sync.status.devices.length
-        ? sync.status.devices.map(d => `${d.deviceName} (${d.clientId.substring(0, 5)})`).join(', ')
+      return sync.server.status.devices.length
+        ? sync.server.status.devices.map(d => `${d.deviceName} (${d.clientId.substring(0, 5)})`).join(', ')
         : ''
     })
 
@@ -53,8 +94,12 @@ export default {
       sendSyncAction({ action: 'generate_code' })
     }
 
-    const setSyncPort = debounce(port => {
-      updateSetting({ 'sync.port': port.trim() })
+    const setSyncServerPort = debounce(port => {
+      updateSetting({ 'sync.server.port': port.trim() })
+    }, 500)
+
+    const setSyncClientHost = debounce(host => {
+      updateSetting({ 'sync.client.host': host.trim() })
     }, 500)
 
 
@@ -62,10 +107,12 @@ export default {
       appSetting,
       updateSetting,
       sync,
-      syncEnableTitle,
-      setSyncPort,
+      syncEnableServerTitle,
+      setSyncServerPort,
+      setSyncClientHost,
       syncDevices,
       refreshSyncCode,
+      clientStatus,
       openUrl,
     }
   },
@@ -75,5 +122,13 @@ export default {
 <style lang="less" module>
 .save-path {
   font-size: 12px;
+}
+
+.portInput[disabled], .hostInput[disabled] {
+  opacity: .8 !important;
+}
+
+.hostInput {
+  min-width: 380px;
 }
 </style>

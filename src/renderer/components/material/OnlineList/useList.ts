@@ -12,16 +12,16 @@ const useKeyEvent = ({ handleSelectAllData }: {
   }
 
   const handle_key_shift_down = () => {
-    if (!keyEvent.isShiftDown) keyEvent.isShiftDown = true
+    keyEvent.isShiftDown ||= true
   }
   const handle_key_shift_up = () => {
-    if (keyEvent.isShiftDown) keyEvent.isShiftDown = false
+    keyEvent.isShiftDown &&= false
   }
   const handle_key_mod_down = () => {
-    if (!keyEvent.isModDown) keyEvent.isModDown = true
+    keyEvent.isModDown ||= true
   }
   const handle_key_mod_up = () => {
-    if (keyEvent.isModDown) keyEvent.isModDown = false
+    keyEvent.isModDown &&= false
   }
   const handle_key_mod_a_down = ({ event }: LX.KeyDownEevent) => {
     if (!event || (event.target as HTMLElement).tagName == 'INPUT') return
@@ -74,13 +74,14 @@ export default ({ props }: {
         removeAllSelect()
         if (lastSelectIndex != clickIndex) {
           let isNeedReverse = false
-          if (clickIndex < lastSelectIndex) {
-            let temp = lastSelectIndex
-            lastSelectIndex = clickIndex
+          let _lastSelectIndex = lastSelectIndex
+          if (clickIndex < _lastSelectIndex) {
+            let temp = _lastSelectIndex
+            _lastSelectIndex = clickIndex
             clickIndex = temp
             isNeedReverse = true
           }
-          selectedList.value = props.list.slice(lastSelectIndex, clickIndex + 1)
+          selectedList.value = props.list.slice(_lastSelectIndex, clickIndex + 1)
           if (isNeedReverse) selectedList.value.reverse()
         }
       } else {

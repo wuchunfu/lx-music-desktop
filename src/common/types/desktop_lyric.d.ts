@@ -26,11 +26,15 @@ declare namespace LX {
       // 'desktopLyric.style.fontWeight': LX.AppSetting['desktopLyric.style.fontWeight']
       'desktopLyric.style.opacity': LX.AppSetting['desktopLyric.style.opacity']
       'desktopLyric.style.ellipsis': LX.AppSetting['desktopLyric.style.ellipsis']
+      'desktopLyric.style.isFontWeightFont': LX.AppSetting['desktopLyric.style.isFontWeightFont']
+      'desktopLyric.style.isFontWeightLine': LX.AppSetting['desktopLyric.style.isFontWeightLine']
+      'desktopLyric.style.isFontWeightExtended': LX.AppSetting['desktopLyric.style.isFontWeightExtended']
       'desktopLyric.style.isZoomActiveLrc': LX.AppSetting['desktopLyric.style.isZoomActiveLrc']
       'common.langId': LX.AppSetting['common.langId']
       'player.isShowLyricTranslation': LX.AppSetting['player.isShowLyricTranslation']
       'player.isShowLyricRoma': LX.AppSetting['player.isShowLyricRoma']
       'player.isPlayLxlrc': LX.AppSetting['player.isPlayLxlrc']
+      'player.playbackRate': LX.AppSetting['player.playbackRate']
     }
 
     type WinMainActions = 'get_info' | 'get_status' | 'get_analyser_data_array'
@@ -69,6 +73,7 @@ declare namespace LX {
       lxlrc: string | null
     }>
     | LyricAction<'set_offset', number>
+    | LyricAction<'set_playbackRate', number>
     | LyricAction<'set_play', number>
     | LyricAction<'set_pause'>
     | LyricAction<'set_stop'>
@@ -76,8 +81,8 @@ declare namespace LX {
 
 
     interface NewBounds {
-      x?: number | null
-      y?: number
+      x: number
+      y: number
       w: number
       h: number
     }

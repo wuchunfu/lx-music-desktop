@@ -1,7 +1,7 @@
 import { join } from 'path'
 import { BrowserWindow } from 'electron'
-import { debounce, isLinux } from '@common/utils'
-import { getLyricWindowBounds } from './utils'
+import { debounce, isLinux, isWin } from '@common/utils'
+import { initWindowSize } from './utils'
 import { mainSend } from '@common/mainIpc'
 import { encodePath } from '@common/utils/electron'
 
@@ -9,10 +9,11 @@ import { encodePath } from '@common/utils/electron'
 // require('./rendererEvent')
 
 let browserWindow: Electron.BrowserWindow | null = null
+let isWinBoundsUpdateing = false
 
-
-const setLyricsConfig = debounce((config: Partial<LX.AppSetting>) => {
+const saveBoundsConfig = debounce((config: Partial<LX.AppSetting>) => {
   global.lx.event_app.update_config(config)
+  if (isWinBoundsUpdateing) isWinBoundsUpdateing = false
 }, 500)
 
 const winEvent = () => {
@@ -31,21 +32,31 @@ const winEvent = () => {
 
   browserWindow.on('move', () => {
     // bounds = browserWindow.getBounds()
-    // console.log(bounds)
-    const bounds = browserWindow!.getBounds()
-    setLyricsConfig({
-      'desktopLyric.x': bounds.x,
-      'desktopLyric.y': bounds.y,
-      'desktopLyric.width': bounds.width,
-      'desktopLyric.height': bounds.height,
-    })
+    // console.log('move', isWinBoundsUpdateing)
+    if (isWinBoundsUpdateing) {
+      const bounds = browserWindow!.getBounds()
+      saveBoundsConfig({
+        'desktopLyric.x': bounds.x,
+        'desktopLyric.y': bounds.y,
+        'desktopLyric.width': bounds.width,
+        'desktopLyric.height': bounds.height,
+      })
+    } else if (isWin) { // Linux 不允许将窗口设置出屏幕之外，MacOS未知，故只在Windows下执行强制设置
+      // 非主动调整窗口触发的窗口位置变化将重置回设置值
+      browserWindow!.setBounds({
+        x: global.lx.appSetting['desktopLyric.x'] ?? 0,
+        y: global.lx.appSetting['desktopLyric.y'] ?? 0,
+        width: global.lx.appSetting['desktopLyric.width'],
+        height: global.lx.appSetting['desktopLyric.height'],
+      })
+    }
   })
 
   browserWindow.on('resize', () => {
     // bounds = browserWindow.getBounds()
     // console.log(bounds)
     const bounds = browserWindow!.getBounds()
-    setLyricsConfig({
+    saveBoundsConfig({
       'desktopLyric.x': bounds.x,
       'desktopLyric.y': bounds.y,
       'desktopLyric.width': bounds.width,
@@ -66,10 +77,11 @@ const winEvent = () => {
       browserWindow!.setIgnoreMouseEvents(true, { forward: !isLinux && global.lx.appSetting['desktopLyric.isHoverHide'] })
     }
     // linux下每次重开时貌似要重新设置置顶
-    if (isLinux && global.lx.appSetting['desktopLyric.isAlwaysOnTop']) {
-      browserWindow!.setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
-    }
+    // if (isLinux && global.lx.appSetting['desktopLyric.isAlwaysOnTop']) {
+    //   browserWindow!.setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
+    // }
     if (global.lx.appSetting['desktopLyric.isAlwaysOnTop'] && global.lx.appSetting['desktopLyric.isAlwaysOnTopLoop']) alwaysOnTopTools.startLoop()
+    browserWindow!.blur()
   })
 }
 
@@ -81,20 +93,16 @@ export const createWindow = () => {
   let width = global.lx.appSetting['desktopLyric.width']
   let height = global.lx.appSetting['desktopLyric.height']
   let isAlwaysOnTop = global.lx.appSetting['desktopLyric.isAlwaysOnTop']
-  let isLockScreen = global.lx.appSetting['desktopLyric.isLockScreen']
+  // let isLockScreen = global.lx.appSetting['desktopLyric.isLockScreen']
   let isShowTaskbar = global.lx.appSetting['desktopLyric.isShowTaskbar']
-  let { width: screenWidth, height: screenHeight } = global.envParams.workAreaSize
-  if (x == null || y == null) {
-    x = screenWidth - width
-    y = screenHeight - height
-  }
-  if (isLockScreen) {
-    let bounds = getLyricWindowBounds({ x, y, width, height }, { x: null, y: 0, w: width, h: height })
-    x = bounds.x
-    y = bounds.y
-    width = bounds.width
-    height = bounds.height
-  }
+  // let { width: screenWidth, height: screenHeight } = global.envParams.workAreaSize
+  const winSize = initWindowSize(x, y, width, height)
+  global.lx.event_app.update_config({
+    'desktopLyric.x': winSize.x,
+    'desktopLyric.y': winSize.y,
+    'desktopLyric.width': winSize.width,
+    'desktopLyric.height': winSize.height,
+  })
 
   const { shouldUseDarkColors, theme } = global.lx.theme
 
@@ -102,10 +110,10 @@ export const createWindow = () => {
    * Initial window options
    */
   browserWindow = new BrowserWindow({
-    height,
-    width,
-    x,
-    y,
+    height: winSize.height,
+    width: winSize.width,
+    x: winSize.x,
+    y: winSize.y,
     minWidth: 380,
     minHeight: 80,
     useContentSize: true,
@@ -161,6 +169,7 @@ export const getBounds = (): Electron.Rectangle => {
 
 export const setBounds = (bounds: Electron.Rectangle) => {
   if (!browserWindow) return
+  isWinBoundsUpdateing = true
   browserWindow.setBounds(bounds)
 }
 
@@ -202,7 +211,10 @@ export const alwaysOnTopTools: AlwaysOnTopTools = {
   startLoop() {
     this.clearLoop()
     this.timeout = setInterval(() => {
-      if (!isExistWindow()) return this.clearLoop()
+      if (!isExistWindow()) {
+        this.clearLoop()
+        return
+      }
       setAlwaysOnTop(true, 'screen-saver')
     }, 1000)
   },

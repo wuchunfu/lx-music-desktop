@@ -1,5 +1,6 @@
 import { httpFetch } from '../../request'
 import { decodeName, dateFormat2 } from '../../index'
+import { signatureParams } from './util'
 
 export default {
   _requestObj: null,
@@ -7,21 +8,24 @@ export default {
   async getComment({ hash }, page = 1, limit = 20) {
     if (this._requestObj) this._requestObj.cancelHttp()
 
-    const _requestObj = httpFetch(`http://comment.service.kugou.com/index.php?r=commentsv2/getCommentWithLike&code=fc4be23b4e972707f36b8a828a93ba8a&extdata=${hash}&p=${page}&pagesize=${limit}&ver=1.01&clientver=8373&appid=1001&kugouid=687373022&need_show_image=1`, {
+    let timestamp = Date.now()
+    const params = `appid=1005&clienttime=${timestamp}&clienttoken=0&clientver=11409&code=fc4be23b4e972707f36b8a828a93ba8a&dfid=0&extdata=${hash}&kugouid=0&mid=16249512204336365674023395779019&mixsongid=0&p=${page}&pagesize=${limit}&uuid=0&ver=10`
+    const _requestObj = httpFetch(`http://m.comment.service.kugou.com/r/v1/rank/newest?${params}&signature=${signatureParams(params)}`, {
       headers: {
-        'User-Agent': 'Android712-AndroidPhone-8983-18-0-COMMENT-wifi',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.24',
       },
     })
     const { body, statusCode } = await _requestObj.promise
     // console.log(body)
     if (statusCode != 200 || body.err_code !== 0) throw new Error('获取评论失败')
-    return { source: 'kg', comments: this.filterComment(body.list || []), total: body.count, page, limit, maxPage: Math.ceil(body.count / limit) || 1 }
+    return { source: 'kg', comments: this.filterComment(body.list || []), total: body.count, page, limit, maxPage: body.maxPage }
   },
-  async getHotComment({ hash, songmid }, page = 1, limit = 100) {
+  async getHotComment({ hash }, page = 1, limit = 20) {
     // console.log(songmid)
     if (this._requestObj2) this._requestObj2.cancelHttp()
-
-    const _requestObj2 = httpFetch(`http://comment.service.kugou.com/index.php?r=commentsv2/getCommentWithLike&code=fc4be23b4e972707f36b8a828a93ba8a&extdata=${hash}&p=${page}&pagesize=${limit}&ver=1.01&clientver=8373&appid=1001&kugouid=687373022&need_show_image=1`, {
+    let timestamp = Date.now()
+    const params = `appid=1005&clienttime=${timestamp}&clienttoken=0&clientver=11409&code=fc4be23b4e972707f36b8a828a93ba8a&dfid=0&extdata=${hash}&kugouid=0&mid=16249512204336365674023395779019&mixsongid=0&p=${page}&pagesize=${limit}&uuid=0&ver=10`
+    const _requestObj2 = httpFetch(`http://m.comment.service.kugou.com/v1/weightlist?${params}&signature=${signatureParams(params)}`, {
       headers: {
         'User-Agent': 'Android712-AndroidPhone-8983-18-0-COMMENT-wifi',
       },
@@ -29,8 +33,8 @@ export default {
     const { body, statusCode } = await _requestObj2.promise
     // console.log(body)
     if (statusCode != 200 || body.err_code !== 0) throw new Error('获取热门评论失败')
-    const total = body.weightList?.length ?? 0
-    return { source: 'kg', comments: this.filterComment(body.weightList || []), total, page, limit, maxPage: 1 }
+    const total = body.count ?? 0
+    return { source: 'kg', comments: this.filterComment(body.list || []), total, page, limit, maxPage: Math.ceil(body.count / limit) || 1 }
   },
   async getReplyComment({ songmid, audioId }, replyId, page = 1, limit = 100) {
     if (this._requestObj2) this._requestObj2.cancelHttp()
@@ -53,7 +57,7 @@ export default {
     return rawList.map(item => {
       let data = {
         id: item.id,
-        text: decodeName(item.content || '').split('\n'),
+        text: decodeName(item.content || ''),
         images: item.images ? item.images.map(i => i.url) : [],
         location: item.location,
         time: item.addtime,
@@ -69,7 +73,7 @@ export default {
       return item.pcontent
         ? {
             id: item.id,
-            text: decodeName(item.pcontent).split('\n'),
+            text: decodeName(item.pcontent),
             time: null,
             userName: item.puser,
             avatar: null,

@@ -1,6 +1,6 @@
 // import { reactive, ref, shallowRef } from '@common/utils/vueTools'
 import {
-  PlayerMusicInfo,
+  type PlayerMusicInfo,
   musicInfo,
   isPlay,
   status,
@@ -202,7 +202,8 @@ export const setPlayMusicInfo = (listId: string | null, musicInfo: LX.Download.L
  * @param playMusicInfo playMusicInfo对象
  */
 export const addPlayedList = (playMusicInfo: LX.Player.PlayMusicInfo) => {
-  if (playedList.some(m => m.musicInfo === playMusicInfo.musicInfo)) return
+  const id = playMusicInfo.musicInfo.id
+  if (playedList.some(m => m.musicInfo.id === id)) return
   playedList.push(playMusicInfo)
 }
 /**
@@ -224,7 +225,7 @@ export const clearPlayedList = () => {
  * @param list 歌曲列表
  */
 export const addTempPlayList = (list: LX.Player.TempPlayListItem[]) => {
-  const topList: Array<{ listId: string, musicInfo: LX.Music.MusicInfo | LX.Download.ListItem }> = []
+  const topList: Array<Omit<LX.Player.TempPlayListItem, 'top'>> = []
   const bottomList = list.filter(({ isTop, ...musicInfo }) => {
     if (isTop) {
       topList.push(musicInfo)

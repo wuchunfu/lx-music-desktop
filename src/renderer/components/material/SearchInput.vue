@@ -8,9 +8,10 @@
           :placeholder="placeholder"
           @focus="handleFocus"
           @blur="handleBlur"
-          @input="$emit('update:modelValue', text)"
+          @input="$emit('update:model-value', text)"
           @change="sendEvent('change')"
           @keyup.enter="handleSearch"
+          @keydown.arrow-down.arrow-up.prevent
           @keyup.arrow-down.prevent="handleKeyDown"
           @keyup.arrow-up.prevent="handleKeyUp"
           @contextmenu="handleContextMenu"
@@ -81,7 +82,7 @@ export default {
       default: false,
     },
   },
-  emits: ['update:modelValue', 'event'],
+  emits: ['update:model-value', 'event'],
   data() {
     return {
       isShow: false,
@@ -173,11 +174,11 @@ export default {
       str = str.replace(/\s+/g, ' ')
       let dom_input = this.$refs.dom_input
       this.text = this.text.substring(0, dom_input.selectionStart) + str + this.text.substring(dom_input.selectionEnd, this.text.length)
-      this.$emit('update:modelValue', this.text)
+      this.$emit('update:model-value', this.text)
     },
     handleClearList() {
       this.text = ''
-      this.$emit('update:modelValue', this.text)
+      this.$emit('update:model-value', this.text)
       this.sendEvent('submit')
     },
   },
@@ -202,9 +203,10 @@ export default {
   transition: box-shadow .4s ease, background-color @transition-normal;
   display: flex;
   flex-flow: column nowrap;
-  background-color: var(--color-primary-light-600-alpha-100);
+  background-color: var(--color-primary-light-300-alpha-700);
 
   &.active {
+    background-color: var(--color-primary-light-600-alpha-100);
     box-shadow: 0 1px 5px 0 rgba(0,0,0,.2);
     .form {
       input {

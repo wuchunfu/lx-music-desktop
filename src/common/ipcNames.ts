@@ -55,6 +55,7 @@ const modules = {
     change_tray: 'change_tray',
     quit_update: 'quit_update',
     update_check: 'update_check',
+    update_download_update: 'update_download_update',
     update_available: 'update_available',
     update_error: 'update_error',
     update_progress: 'update_progress',
@@ -72,6 +73,7 @@ const modules = {
     // lang_s2t: 'lang_s2t',
 
     handle_kw_decode_lyric: 'handle_kw_decode_lyric',
+    handle_tx_decode_lyric: 'handle_tx_decode_lyric',
     get_lyric_info: 'get_lyric_info',
     set_lyric_info: 'set_lyric_info',
     set_config: 'set_config',
@@ -88,6 +90,12 @@ const modules = {
     get_other_source_count: 'get_other_source_count',
     get_data: 'get_data',
     save_data: 'save_data',
+    get_sound_effect_eq_preset: 'get_sound_effect_eq_preset',
+    save_sound_effect_eq_preset: 'save_sound_effect_eq_preset',
+    get_sound_effect_convolution_preset: 'get_sound_effect_convolution_preset',
+    save_sound_effect_convolution_preset: 'save_sound_effect_convolution_preset',
+    // get_sound_effect_pitch_shifter_preset: 'get_sound_effect_pitch_shifter_preset',
+    // save_sound_effect_pitch_shifter_preset: 'save_sound_effect_pitch_shifter_preset',
     get_hot_key: 'get_hot_key',
 
     import_user_api: 'import_user_api',

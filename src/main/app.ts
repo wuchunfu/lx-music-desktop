@@ -1,6 +1,6 @@
 import { join, dirname } from 'path'
-import { existsSync, mkdirSync } from 'fs'
-import { app, shell, screen, nativeTheme } from 'electron'
+import { existsSync, mkdirSync, renameSync } from 'fs'
+import { app, shell, screen, nativeTheme, dialog } from 'electron'
 import { URL_SCHEME_RXP } from '@common/constants'
 import { getTheme, initHotKey, initSetting, parseEnvParams } from './utils'
 import { navigationUrlWhiteList } from '@common/config'
@@ -10,6 +10,7 @@ import { createAppEvent, createListEvent } from '@main/event'
 import { isMac, log } from '@common/utils'
 import createWorkers from './worker'
 import { migrateDBData } from './utils/migrate'
+import { openDirInExplorer } from '@common/utils/electron'
 
 export const initGlobalData = () => {
   global.isDev = process.env.NODE_ENV !== 'production'
@@ -116,8 +117,14 @@ export const registerDeeplink = (startApp: () => void) => {
 export const listenerAppEvent = (startApp: () => void) => {
   app.on('web-contents-created', (event, contents) => {
     contents.on('will-navigate', (event, navigationUrl) => {
-      if (global.isDev) return console.log('navigation to url:', navigationUrl)
-      if (!navigationUrlWhiteList.some(url => url.test(navigationUrl))) return event.preventDefault()
+      if (global.isDev) {
+        console.log('navigation to url:', navigationUrl)
+        return
+      }
+      if (!navigationUrlWhiteList.some(url => url.test(navigationUrl))) {
+        event.preventDefault()
+        return
+      }
       console.log('navigation to url:', navigationUrl)
     })
     contents.setWindowOpenHandler(({ url }) => {
@@ -231,9 +238,20 @@ export const initAppSetting = async() => {
   }
 
   if (!isInitialized) {
-    const dbFileExists = await global.lx.worker.dbService.init(global.lxDataPath)
+    let dbFileExists = await global.lx.worker.dbService.init(global.lxDataPath)
+    if (dbFileExists === null) {
+      const backPath = join(global.lxDataPath, `lx.data.db.${Date.now()}.bak`)
+      dialog.showMessageBoxSync({
+        type: 'warning',
+        message: 'Database verify failed',
+        detail: `数据库表结构校验失败，我们将把有问题的数据库备份到：${backPath}\n若此问题导致你的数据丢失，你可以尝试从备份文件找回它们。\n\nThe database table structure verification failed, we will back up the problematic database to: ${backPath}\nIf this problem causes your data to be lost, you can try to retrieve them from the backup file.`,
+      })
+      renameSync(join(global.lxDataPath, 'lx.data.db'), backPath)
+      openDirInExplorer(backPath)
+      dbFileExists = await global.lx.worker.dbService.init(global.lxDataPath)
+    }
     global.lx.appSetting = (await initSetting()).setting
-    if (!dbFileExists) await migrateDBData().catch(err => log.error(err))
+    if (!dbFileExists) await migrateDBData().catch(err => { log.error(err) })
     initTheme()
   }
   // global.lx.theme = getTheme()

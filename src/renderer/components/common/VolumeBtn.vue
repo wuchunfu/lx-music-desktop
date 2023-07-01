@@ -16,7 +16,7 @@
             @update:model-value="saveVolumeIsMute($event)"
           />
         </div>
-        <common-volume-bar />
+        <base-slider-bar :class="$style.slider" :value="volume" :min="0" :max="1" @change="handleUpdateVolume" />
       </div>
     </template>
   </material-popup-btn>
@@ -29,6 +29,10 @@ import { computed } from '@common/utils/vueTools'
 // import { musicInfo, playMusicInfo } from '@renderer/store/player/state'
 import { saveVolumeIsMute } from '@renderer/store/setting'
 import { volume, isMute } from '@renderer/store/player/volume'
+
+const handleUpdateVolume = (val) => {
+  window.app_event.setVolume(val)
+}
 
 const icon = computed(() => {
   return isMute.value
@@ -87,6 +91,7 @@ const icon = computed(() => {
   flex-flow: column nowrap;
   padding: 2px 3px;
   gap: 8px;
+  width: 140px;
 }
 
 .info {
@@ -100,5 +105,8 @@ const icon = computed(() => {
   }
 }
 
+.slider {
+  width: 100%;
+}
 
 </style>

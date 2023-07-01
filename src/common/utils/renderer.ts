@@ -45,7 +45,10 @@ const handleScrollY = (element: HTMLElement, to: number, duration = 300, fn = no
       element.scrollTop = val
     }
     if (currentTime < duration) {
-      if (cancel) return fn()
+      if (cancel) {
+        fn()
+        return
+      }
       window.setTimeout(animateScroll, increment)
     } else {
       fn()
@@ -117,7 +120,10 @@ const handleScrollX = (element: HTMLElement, to: number, duration = 300, fn = ()
       element.scrollLeft = val
     }
     if (currentTime < duration) {
-      if (cancel) return fn()
+      if (cancel) {
+        fn()
+        return
+      }
       window.setTimeout(animateScroll, increment)
     } else {
       fn()
@@ -192,7 +198,10 @@ const handleScrollXR = (element: HTMLElement, to: number, duration = 300, fn = (
       element.scrollLeft = val
     }
     if (currentTime < duration) {
-      if (cancel) return fn()
+      if (cancel) {
+        fn()
+        return
+      }
       window.setTimeout(animateScroll, increment)
     } else {
       fn()
@@ -235,7 +244,7 @@ export const scrollXRTo = (element: HTMLElement, to: number, duration = 300, fn 
   */
 let dom_title = document.getElementsByTagName('title')[0]
 export const setTitle = (title: string | null) => {
-  if (!title) title = '洛雪音乐助手'
+  title ||= '洛雪音乐助手'
   dom_title.innerText = title
 }
 

@@ -20,7 +20,7 @@ module.exports = {
       type: 'commonjs2',
     },
     path: path.join(__dirname, '../../dist'),
-    publicPath: 'auto',
+    publicPath: '',
   },
   resolve: {
     alias: {
@@ -48,6 +48,12 @@ module.exports = {
           options: {
             appendTsSuffixTo: [/\.vue$/],
           },
+        },
+        parser: {
+          worker: [
+            '*audioContext.audioWorklet.addModule()',
+            '...',
+          ],
         },
       },
       {
@@ -104,7 +110,7 @@ module.exports = {
         ],
       },
       {
-        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)$/,
         type: 'asset',
         parser: {
           dataUrlCondition: {

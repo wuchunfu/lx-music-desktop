@@ -10,16 +10,16 @@ const useKeyEvent = ({ handleSelectAllData }) => {
   }
 
   const handle_key_shift_down = () => {
-    if (!keyEvent.isShiftDown) keyEvent.isShiftDown = true
+    keyEvent.isShiftDown ||= true
   }
   const handle_key_shift_up = () => {
-    if (keyEvent.isShiftDown) keyEvent.isShiftDown = false
+    keyEvent.isShiftDown &&= false
   }
   const handle_key_mod_down = () => {
-    if (!keyEvent.isModDown) keyEvent.isModDown = true
+    keyEvent.isModDown ||= true
   }
   const handle_key_mod_up = () => {
-    if (keyEvent.isModDown) keyEvent.isModDown = false
+    keyEvent.isModDown &&= false
   }
   const handle_key_mod_a_down = ({ event }) => {
     if (event.target.tagName == 'INPUT') return
@@ -67,14 +67,15 @@ export default ({ list }) => {
       if (selectedList.value.length) {
         removeAllSelect()
         if (lastSelectIndex != clickIndex) {
+          let _lastSelectIndex = lastSelectIndex
           let isNeedReverse = false
-          if (clickIndex < lastSelectIndex) {
-            let temp = lastSelectIndex
-            lastSelectIndex = clickIndex
+          if (clickIndex < _lastSelectIndex) {
+            let temp = _lastSelectIndex
+            _lastSelectIndex = clickIndex
             clickIndex = temp
             isNeedReverse = true
           }
-          selectedList.value = list.value.slice(lastSelectIndex, clickIndex + 1)
+          selectedList.value = list.value.slice(_lastSelectIndex, clickIndex + 1)
           if (isNeedReverse) selectedList.value.reverse()
         }
       } else {

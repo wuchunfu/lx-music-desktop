@@ -1,46 +1,53 @@
 <template lang="pug">
-dt#other {{$t('setting__other')}}
+dt#other {{ $t('setting__other') }}
 dd
-  h3#other_tray_theme {{$t('setting__other_tray_theme')}}
+  h3#other_tray_theme {{ $t('setting__other_tray_theme') }}
   div
-    base-checkbox.gap-left(:id="'setting_tray_theme_' + item.id" :modelValue="appSetting['tray.themeId']" @update:modelValue="updateSetting({'tray.themeId': $event})" name="setting_tray_theme" need
-      :label="item.label" :key="item.id" :value="item.id" v-for="item in trayThemeList")
+    base-checkbox.gap-left(
+      v-for="item in trayThemeList" :id="'setting_tray_theme_' + item.id" :key="item.id" :model-value="appSetting['tray.themeId']" name="setting_tray_theme"
+      need :label="item.label" :value="item.id" @update:model-value="updateSetting({'tray.themeId': $event})")
 dd
   h3#other_resource_cache
-    | {{$t('setting__other_resource_cache')}}
+    | {{ $t('setting__other_resource_cache') }}
     svg-icon(class="help-icon" name="help-circle-outline" :aria-label="$t('setting__other_resource_cache_tip')")
   div
-    p
-      | {{$t('setting__other_resource_cache_label')}}
-      span.auto-hidden {{cacheSize}}
-    p
+    .p
+      | {{ $t('setting__other_resource_cache_label') }}
+      span.auto-hidden {{ cacheSize }}
+    .p
       base-btn.btn(min :disabled="isDisabledResourceCacheClear" @click="clearResourceCache") {{$t('setting__other_resource_cache_clear_btn')}}
 
 dd
-  h3#other_other_source {{$t('setting__other_other_cache')}}
+  h3#other_other_source {{ $t('setting__other_other_cache') }}
   div
-    p
-      | {{$t('setting__other_other_source_label')}}
-      span.auto-hidden {{otherSourceCount}}
-    p
-      | {{$t('setting__other_music_url_label')}}
-      span.auto-hidden {{musicUrlCount}}
-    p
-      | {{$t('setting__other_lyric_raw_label')}}
-      span.auto-hidden {{lyricRawCount}}
-    p
-      base-btn.btn(min :disabled="isDisabledOtherSourceCacheClear" @click="handleClearOtherSourceCache") {{$t('setting__other_other_source_clear_btn')}}
-      base-btn.btn(min :disabled="isDisabledMusicUrlCacheClear" @click="handleClearMusicUrlCache") {{$t('setting__other_music_url_clear_btn')}}
+    .p
+      | {{ $t('setting__other_other_source_label') }}
+      span.auto-hidden {{ otherSourceCount }}
+    .p
+      | {{ $t('setting__other_music_url_label') }}
+      span.auto-hidden {{ musicUrlCount }}
+    .p
+      | {{ $t('setting__other_lyric_raw_label') }}
+      span.auto-hidden {{ lyricRawCount }}
+    .p
+      base-btn.btn(min :disabled="isDisabledOtherSourceCacheClear" @click="handleClearOtherSourceCache") {{ $t('setting__other_other_source_clear_btn') }}
+      base-btn.btn(min :disabled="isDisabledMusicUrlCacheClear" @click="handleClearMusicUrlCache") {{ $t('setting__other_music_url_clear_btn') }}
       base-btn.btn(min :disabled="isDisabledLyricRawCacheClear" @click="handleClearLyricRawCache") {{$t('setting__other_lyric_raw_clear_btn')}}
 
 dd
-  h3#other_lyric_edited {{$t('setting__other_lyric_edited_cache')}}
+  h3#other_lyric_edited {{ $t('setting__other_lyric_edited_cache') }}
   div
-    p
-      | {{$t('setting__other_lyric_edited_label')}}
-      span.auto-hidden {{lyricEditedCount}}
-    p
+    .p
+      | {{ $t('setting__other_lyric_edited_label') }}
+      span.auto-hidden {{ lyricEditedCount }}
+    .p
       base-btn.btn(min :disabled="isDisabledLyricEditedCacheClear" @click="handleClearLyricEditedCache") {{$t('setting__other_lyric_edited_clear_btn')}}
+
+dd
+  h3#other_lyric_edited {{ $t('setting__other_listdata') }}
+  div
+    .p
+      base-btn.btn(min @click="handleClearListData") {{$t('setting__other_listdata_clear_btn')}}
 
 </template>
 
@@ -57,6 +64,7 @@ import { sizeFormate } from '@common/utils/common'
 import { dialog } from '@renderer/plugins/Dialog'
 import { useI18n } from '@renderer/plugins/i18n'
 import { appSetting, updateSetting } from '@renderer/store/setting'
+import { overwriteListFull } from '@renderer/store/list/listManage'
 
 export default {
   name: 'SettingOther',
@@ -166,6 +174,20 @@ export default {
     }
     refreshLyricEditedCount()
 
+    const handleClearListData = async() => {
+      if (!await dialog.confirm({
+        message: t('setting__other_listdata_clear_tip_confirm'),
+        cancelButtonText: t('cancel_button_text'),
+        confirmButtonText: t('setting__other_resource_cache_confirm'),
+      })) return
+      overwriteListFull({
+        defaultList: [],
+        loveList: [],
+        userList: [],
+        tempList: [],
+      })
+    }
+
     return {
       appSetting,
       updateSetting,
@@ -189,6 +211,8 @@ export default {
       lyricEditedCount,
       isDisabledLyricEditedCacheClear,
       handleClearLyricEditedCache,
+
+      handleClearListData,
     }
   },
 }

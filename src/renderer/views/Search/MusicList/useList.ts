@@ -5,10 +5,10 @@ import { getListMusics, addListMusics } from '@renderer/store/list/action'
 import { addHistoryWord } from '@renderer/store/search/action'
 // import { useI18n } from '@renderer/plugins/i18n'
 // import { } from '@renderer/store/search/state'
-import { search as searchMusic, listInfos, ListInfo } from '@renderer/store/search/music'
+import { search as searchMusic, listInfos, type ListInfo } from '@renderer/store/search/music'
 import { assertApiSupport } from '@renderer/store/utils'
 
-export declare type SearchSource = LX.OnlineSource | 'all'
+export type SearchSource = LX.OnlineSource | 'all'
 
 export default () => {
   const listRef = ref<any>(null)

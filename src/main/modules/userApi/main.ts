@@ -27,7 +27,7 @@ const winEvent = () => {
 
 export const createWindow = async(userApi: LX.UserApi.UserApiInfo) => {
   await closeWindow()
-  if (!dir) dir = global.isDev ? webpackUserApiPath : join(encodePath(__dirname), 'userApi')
+  dir ??= global.isDev ? webpackUserApiPath : join(encodePath(__dirname), 'userApi')
 
   if (!html) {
     html = await fs.promises.readFile(join(dir, 'renderer/user-api.html'), 'utf8')
@@ -52,6 +52,7 @@ export const createWindow = async(userApi: LX.UserApi.UserApiInfo) => {
       // worldSafeExecuteJavaScript: true,
       nodeIntegration: false,
       nodeIntegrationInWorker: false,
+      sandbox: false,
 
       spellcheck: false,
       autoplayPolicy: 'document-user-activation-required',
@@ -72,7 +73,10 @@ export const createWindow = async(userApi: LX.UserApi.UserApiInfo) => {
     })
   }
   browserWindow.webContents.session.setPermissionRequestHandler((webContents, permission, resolve) => {
-    if (webContents === browserWindow?.webContents) return resolve(false)
+    if (webContents === browserWindow?.webContents) {
+      resolve(false)
+      return
+    }
     resolve(true)
   })
   browserWindow.webContents.setWindowOpenHandler(() => {

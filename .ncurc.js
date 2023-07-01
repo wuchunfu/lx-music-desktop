@@ -4,16 +4,26 @@ module.exports = {
     'electron',
     'chalk',
     'del',
+    'comlink',
+    'vue',
+    'eslint-plugin-n',
+    '@types/ws',
   ],
+
   // target: 'newest',
   // filter: [
-  //   /^vue/,
   //   'electron-builder',
   //   'electron-updater',
   // ],
 
+  // target: 'patch',
+  // filter: [
+  //   'vue',
+  // ],
+
   // target: 'minor',
   // filter: [
+  //   'eslint-plugin-n',
   //   'electron',
   // ],
 }

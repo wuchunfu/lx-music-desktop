@@ -1,5 +1,6 @@
 import { httpFetch } from '../../request'
-import { decodeName, formatPlayTime, sizeFormate, dateFormat } from '../../index'
+import { decodeName, formatPlayTime, sizeFormate, dateFormat, formatPlayCount } from '../../index'
+import { formatSingerName } from '../utils'
 
 export default {
   _requestObj_tags: null,
@@ -24,8 +25,8 @@ export default {
 
     // https://y.qq.com/n/yqq/playlist/7217720898.html
     // https://i.y.qq.com/n2/m/share/details/taoge.html?platform=11&appshare=android_qq&appversion=9050006&id=7217720898&ADTAG=qfshare
-    listDetailLink1: /^.+(?:(?:\?|&)id=|ryqq\/playlist\/)(\d+)(?:&.*$|#.*$|$)/,
-    listDetailLink2: /^.+\/(\d+)\.html(?:\?.*|&.*$|#.*$|$)/,
+    listDetailLink: /\/playlist\/(\d+)/,
+    listDetailLink2: /id=(\d+)/,
   },
   tagsUrl: 'https://u.y.qq.com/cgi-bin/musicu.fcg?loginUin=0&hostUin=0&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=wk_v15.json&needNewCode=0&data=%7B%22tags%22%3A%7B%22method%22%3A%22get_all_categories%22%2C%22param%22%3A%7B%22qq%22%3A%22%22%7D%2C%22module%22%3A%22playlist.PlaylistAllCategoriesServer%22%7D%7D',
   hotTagUrl: 'https://c.y.qq.com/node/pc/wk_v15/category_playlist.html',
@@ -118,28 +119,18 @@ export default {
     this._requestObj_list = httpFetch(
       this.getListUrl(sortId, tagId, page),
     )
-    console.log(this.getListUrl(sortId, tagId, page))
+    // console.log(this.getListUrl(sortId, tagId, page))
     return this._requestObj_list.promise.then(({ body }) => {
       if (body.code !== this.successCode) return this.getList(sortId, tagId, page, ++tryNum)
       return tagId ? this.filterList2(body.playlist.data, page) : this.filterList(body.playlist.data, page)
     })
   },
 
-
-  /**
-   * 格式化播放数量
-   * @param {*} num
-   */
-  formatPlayCount(num) {
-    if (num > 100000000) return parseInt(num / 10000000) / 10 + '亿'
-    if (num > 10000) return parseInt(num / 1000) / 10 + '万'
-    return num
-  },
   filterList(data, page) {
     return {
       list: data.v_playlist.map(item => ({
-        play_count: this.formatPlayCount(item.access_num),
-        id: item.tid,
+        play_count: formatPlayCount(item.access_num),
+        id: String(item.tid),
         author: item.creator_info.nick,
         name: item.title,
         time: item.modify_time ? dateFormat(item.modify_time * 1000, 'Y-M-D') : '',
@@ -159,8 +150,8 @@ export default {
     // console.log(content.v_item)
     return {
       list: content.v_item.map(({ basic }) => ({
-        play_count: this.formatPlayCount(basic.play_cnt),
-        id: basic.tid,
+        play_count: formatPlayCount(basic.play_cnt),
+        id: String(basic.tid),
         author: basic.creator.nick,
         name: basic.title,
         // time: basic.publish_time,
@@ -188,13 +179,15 @@ export default {
 
   async getListId(id) {
     if ((/[?&:/]/.test(id))) {
-      let regx = /\/\/i\.y\.qq\.com/.test(id) ? this.regExps.listDetailLink1 : this.regExps.listDetailLink2
-      if (!regx.test(id)) {
+      if (!this.regExps.listDetailLink.test(id)) {
         id = await this.handleParseId(id)
-        regx = this.regExps.listDetailLink1
-        console.log(id)
       }
-      id = id.replace(regx, '$1')
+      let result = this.regExps.listDetailLink.exec(id)
+      if (!result) {
+        result = this.regExps.listDetailLink2.exec(id)
+        if (!result) throw new Error('failed')
+      }
+      id = result[1]
       // console.log(id)
     }
     return id
@@ -226,16 +219,9 @@ export default {
         img: cdlist.logo,
         desc: decodeName(cdlist.desc).replace(/<br>/g, '\n'),
         author: cdlist.nickname,
-        play_count: this.formatPlayCount(cdlist.visitnum),
+        play_count: formatPlayCount(cdlist.visitnum),
       },
     }
-  },
-  getSinger(singers) {
-    let arr = []
-    singers.forEach(singer => {
-      arr.push(singer.name)
-    })
-    return arr.join('、')
   },
   filterListDetail(rawList) {
     // console.log(rawList)
@@ -272,9 +258,9 @@ export default {
       }
       // types.reverse()
       return {
-        singer: this.getSinger(item.singer),
-        name: item.title,
-        albumName: item.album.title,
+        singer: formatSingerName(item.singer, 'name'),
+        name: item.name,
+        albumName: item.album.name,
         albumId: item.album.mid,
         source: 'tx',
         interval: formatPlayTime(item.interval),
@@ -283,7 +269,7 @@ export default {
         strMediaMid: item.file.media_mid,
         songmid: item.mid,
         img: (item.album.name === '' || item.album.name === '空')
-          ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singer[0].mid}.jpg`
+          ? item.singer?.length ? `https://y.gtimg.cn/music/photo_new/T001R500x500M000${item.singer[0].mid}.jpg` : ''
           : `https://y.gtimg.cn/music/photo_new/T002R500x500M000${item.album.mid}.jpg`,
         lrc: null,
         otherSource: null,
@@ -303,7 +289,8 @@ export default {
     return `https://y.qq.com/n/ryqq/playlist/${id}`
   },
 
-  search(text, page, limit = 20) {
+  search(text, page, limit = 20, retryNum = 0) {
+    if (retryNum > 5) throw new Error('max retry')
     return httpFetch(`http://c.y.qq.com/soso/fcgi-bin/client_music_search_songlist?page_no=${page - 1}&num_per_page=${limit}&format=json&query=${encodeURIComponent(text)}&remoteplace=txt.yqq.playlist&inCharset=utf8&outCharset=utf-8`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)',
@@ -311,13 +298,13 @@ export default {
       },
     })
       .promise.then(({ body }) => {
-        if (body.code != 0) throw new Error('filed')
+        if (body.code != 0) return this.search(text, page, limit, ++retryNum)
         // console.log(body.data.list)
         return {
           list: body.data.list.map(item => {
             return {
-              play_count: this.formatPlayCount(item.listennum),
-              id: item.dissid,
+              play_count: formatPlayCount(item.listennum),
+              id: String(item.dissid),
               author: item.creator.name,
               name: item.dissname,
               time: dateFormat(item.createtime, 'Y-M-D'),

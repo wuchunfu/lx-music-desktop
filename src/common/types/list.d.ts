@@ -4,7 +4,7 @@ declare namespace LX {
       id: string
       name: string
       // list: LX.Music.MusicInfo[]
-      source?: LX.Source
+      source?: LX.OnlineSource
       sourceListId?: string
       // position?: number
       locationUpdateTime: number | null
@@ -12,13 +12,15 @@ declare namespace LX {
 
     interface MyDefaultListInfo {
       id: 'default'
-      name: '试听列表'
+      name: 'list__name_default'
+      // name: '试听列表'
       // list: LX.Music.MusicInfo[]
     }
 
     interface MyLoveListInfo {
       id: 'love'
-      name: '我的收藏'
+      name: 'list__name_love'
+      // name: '我的收藏'
       // list: LX.Music.MusicInfo[]
     }
 

@@ -4,9 +4,7 @@ import { join } from 'path'
 import fs from 'fs'
 import log from 'electron-log'
 
-interface Stores {
-  [key: string]: Store
-}
+type Stores = Record<string, Store>
 
 const stores: Stores = {}
 
@@ -30,7 +28,7 @@ export default (name: string, isIgnoredError = true, isShowErrorAlert = true): S
 
 
     const backPath = join(global.lxDataPath, name + '.json.bak')
-    fs.copyFileSync(join(global.lxDataPath, name + '.json'), backPath)
+    fs.renameSync(join(global.lxDataPath, name + '.json'), backPath)
     if (isShowErrorAlert) {
       dialog.showMessageBoxSync({
         type: 'error',

@@ -1,8 +1,11 @@
 import { join } from 'path'
 import { homedir } from 'os'
 
+const isMac = process.platform == 'darwin'
+const isWin = process.platform == 'win32'
+
 const defaultSetting: LX.AppSetting = {
-  version: '2.0.0',
+  version: '2.1.0',
 
   'common.windowSizeId': 3,
   'common.fontSize': 16,
@@ -14,8 +17,10 @@ const defaultSetting: LX.AppSetting = {
   'common.isShowAnimation': true,
   'common.randomAnimate': true,
   'common.isAgreePact': false,
-  'common.controlBtnPosition': process.platform === 'darwin' ? 'left' : 'right',
+  'common.controlBtnPosition': isMac ? 'left' : 'right',
   'common.playBarProgressStyle': 'mini',
+  'common.tryAutoUpdate': true,
+  'common.showChangeLog': true,
 
   'player.startupAutoPlay': false,
   'player.togglePlayMethod': 'listLoop',
@@ -23,17 +28,36 @@ const defaultSetting: LX.AppSetting = {
   'player.isShowTaskProgess': true,
   'player.volume': 1,
   'player.isMute': false,
+  'player.playbackRate': 1,
+  'player.preservesPitch': true,
   'player.mediaDeviceId': 'default',
   'player.isMediaDeviceRemovedStopPlay': false,
   'player.isShowLyricTranslation': false,
   'player.isShowLyricRoma': false,
   'player.isS2t': false,
-  'player.isPlayLxlrc': false,
+  'player.isPlayLxlrc': isWin,
   'player.isSavePlayTime': false,
   'player.audioVisualization': false,
   'player.waitPlayEndStop': true,
   'player.waitPlayEndStopTime': '',
   'player.autoSkipOnError': true,
+  'player.soundEffect.convolution.fileName': '',
+  'player.soundEffect.convolution.mainGain': 10,
+  'player.soundEffect.convolution.sendGain': 0,
+  'player.soundEffect.biquadFilter.hz31': 0,
+  'player.soundEffect.biquadFilter.hz62': 0,
+  'player.soundEffect.biquadFilter.hz125': 0,
+  'player.soundEffect.biquadFilter.hz250': 0,
+  'player.soundEffect.biquadFilter.hz500': 0,
+  'player.soundEffect.biquadFilter.hz1000': 0,
+  'player.soundEffect.biquadFilter.hz2000': 0,
+  'player.soundEffect.biquadFilter.hz4000': 0,
+  'player.soundEffect.biquadFilter.hz8000': 0,
+  'player.soundEffect.biquadFilter.hz16000': 0,
+  'player.soundEffect.panner.enable': false,
+  'player.soundEffect.panner.soundR': 5,
+  'player.soundEffect.panner.speed': 25,
+  'player.soundEffect.pitchShifter.playbackRate': 1,
 
   'playDetail.isZoomActiveLrc': false,
   'playDetail.isShowLyricProgressSetting': false,
@@ -46,11 +70,12 @@ const defaultSetting: LX.AppSetting = {
   'desktopLyric.isAlwaysOnTopLoop': false,
   'desktopLyric.isShowTaskbar': false,
   'desktopLyric.audioVisualization': false,
+  'desktopLyric.fullscreenHide': true,
   'desktopLyric.width': 450,
   'desktopLyric.height': 300,
   'desktopLyric.x': null,
   'desktopLyric.y': null,
-  'desktopLyric.isLockScreen': true,
+  'desktopLyric.isLockScreen': isWin,
   'desktopLyric.isDelayScroll': true,
   'desktopLyric.scrollAlign': 'center',
   'desktopLyric.isHoverHide': false,
@@ -61,11 +86,14 @@ const defaultSetting: LX.AppSetting = {
   'desktopLyric.style.lineGap': 15,
   'desktopLyric.style.lyricUnplayColor': 'rgba(255, 255, 255, 1)',
   'desktopLyric.style.lyricPlayedColor': 'rgba(7, 197, 86, 1)',
-  'desktopLyric.style.lyricShadowColor': 'rgba(0, 0, 0, 0.15)',
+  'desktopLyric.style.lyricShadowColor': 'rgba(0, 0, 0, 0.18)',
   // 'desktopLyric.style.fontWeight': false,
   'desktopLyric.style.opacity': 95,
   'desktopLyric.style.ellipsis': false,
-  'desktopLyric.style.isZoomActiveLrc': true,
+  'desktopLyric.style.isZoomActiveLrc': false,
+  'desktopLyric.style.isFontWeightFont': true,
+  'desktopLyric.style.isFontWeightLine': true,
+  'desktopLyric.style.isFontWeightExtended': true,
 
   'list.isClickPlayList': false,
   'list.isShowSource': true,
@@ -84,6 +112,8 @@ const defaultSetting: LX.AppSetting = {
   'download.lrcFormat': 'utf8',
   'download.isEmbedPic': true,
   'download.isEmbedLyric': false,
+  'download.isEmbedLyricT': false,
+  'download.isEmbedLyricR': false,
   'download.isUseOtherSource': false,
 
   'search.isShowHotSearch': false,
@@ -100,11 +130,14 @@ const defaultSetting: LX.AppSetting = {
   // 'tray.isToTray': false,
   'tray.themeId': 0,
 
+  'sync.mode': 'server',
   'sync.enable': false,
-  'sync.port': '23332',
+  'sync.server.port': '23332',
+  'sync.server.maxSsnapshotNum': 5,
+  'sync.client.host': '',
 
-  'theme.id': 'blue_plus',
-  // 'theme.id': 'green',
+  // 'theme.id': 'blue_plus',
+  'theme.id': 'green',
   'theme.lightId': 'green',
   'theme.darkId': 'black',
 
@@ -117,7 +150,7 @@ const defaultSetting: LX.AppSetting = {
 // 使用新年皮肤
 if (new Date().getMonth() < 2) {
   defaultSetting['theme.id'] = 'happy_new_year'
-  defaultSetting['desktopLyric.style.lyricPlayedColor'] = 'rgba(255, 18, 34, 1)'
+  defaultSetting['desktopLyric.style.lyricPlayedColor'] = 'rgba(255, 57, 71, 1)'
 }
 
 

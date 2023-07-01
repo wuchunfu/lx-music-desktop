@@ -33,7 +33,7 @@ export default () => {
       if (window.lx.isPlayedStop) return
       const currentTime = getCurrentTime()
 
-      if (!mediaBuffer.playTime) mediaBuffer.playTime = currentTime
+      mediaBuffer.playTime ||= currentTime
       let skipTime = currentTime + getRandom(3, 6)
       if (skipTime > playProgress.maxPlayTime) skipTime = (playProgress.maxPlayTime - currentTime) / 2
       if (skipTime - mediaBuffer.playTime < 1 || playProgress.maxPlayTime - skipTime < 1) {
@@ -61,7 +61,7 @@ export default () => {
   const setProgress = (time: number, maxTime?: number) => {
     if (!musicInfo.id) return
     console.log('setProgress', time, maxTime)
-    restorePlayTime = time
+    if (time > 0) restorePlayTime = time
     if (mediaBuffer.playTime) {
       clearBufferTimeout()
       mediaBuffer.playTime = time
@@ -97,7 +97,7 @@ export default () => {
   }
 
   const handleError = () => {
-    if (!restorePlayTime) restorePlayTime = getCurrentTime() // 记录出错的播放时间
+    restorePlayTime ||= getCurrentTime() // 记录出错的播放时间
     console.log('handleError')
     prevProgressStatus = 'error'
     handleSetTaskBarState(playProgress.progress, prevProgressStatus)
@@ -106,14 +106,8 @@ export default () => {
   const handleLoadeddata = () => {
     setMaxplayTime(getDuration())
 
-    console.log('handleLoadeddata', restorePlayTime)
-    if (restorePlayTime) {
-      setCurrentTime(restorePlayTime)
-      restorePlayTime = 0
-    }
-
     if (playMusicInfo.musicInfo && 'source' in playMusicInfo.musicInfo && !playMusicInfo.musicInfo.interval) {
-      console.log(formatPlayTime2(playProgress.maxPlayTime))
+      // console.log(formatPlayTime2(playProgress.maxPlayTime))
 
       if (playMusicInfo.listId) {
         void updateListMusics([{
@@ -128,12 +122,15 @@ export default () => {
   }
 
   const handleCanplay = () => {
-    console.log('handleCanplay', mediaBuffer.playTime)
+    console.log('handleCanplay', mediaBuffer.playTime, restorePlayTime)
     clearBufferTimeout()
     if (mediaBuffer.playTime) {
       let playTime = mediaBuffer.playTime
       mediaBuffer.playTime = 0
       setCurrentTime(playTime)
+    } else if (restorePlayTime) {
+      setCurrentTime(restorePlayTime)
+      restorePlayTime = 0
     }
   }
   const handleWating = () => {

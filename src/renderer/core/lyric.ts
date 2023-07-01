@@ -100,6 +100,7 @@ export const init = () => {
       setLines(markRawList([...lines]))
       setText(lines[0] ?? '', 0)
     },
+    rate: appSetting['player.playbackRate'],
     // offset: 80,
   })
 
@@ -138,6 +139,17 @@ export const setLyricOffset = (offset: number) => {
         action: 'set_play',
         data: time,
       })
+      lrc.play(time)
+    })
+  }
+}
+
+export const setPlaybackRate = (rate: number) => {
+  lrc.setPlaybackRate(rate)
+
+  if (isPlay.value) {
+    setTimeout(() => {
+      const time = getCurrentTime()
       lrc.play(time)
     })
   }
